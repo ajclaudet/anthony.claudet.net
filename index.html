@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Anthony Claudet // EE @ Stevens</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&family=Orbitron:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#00ffe0;--neon2:#a855f7;--neon3:#6366f1;--pink:#ec4899;--amber:#f59e0b;--red:#ef4444;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.85);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Orbitron',sans-serif}
+:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#00ffe0;--neon2:#a855f7;--neon3:#6366f1;--pink:#ec4899;--amber:#f59e0b;--red:#ef4444;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.85);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Inter',system-ui,sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:linear-gradient(var(--neon),var(--neon2));border-radius:3px}
@@ -39,35 +39,30 @@ nav.hide{transform:translateY(-100%)}
 /* ══ HERO ══ */
 #hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1}
 
-/* CITYSCAPE */
-.cityscape{position:absolute;bottom:0;left:0;right:0;height:280px;z-index:1;pointer-events:none}
-.cityscape svg{width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(0,255,224,.1))}
-.city-building{fill:#080c18;stroke:rgba(0,255,224,.08);stroke-width:.5}
-.city-window{fill:rgba(0,255,224,.15);animation:windowFlicker 4s ease-in-out infinite alternate}
-.city-window.p{fill:rgba(168,85,247,.15);animation-delay:.5s}
-.city-window.pk{fill:rgba(236,72,153,.12);animation-delay:1s}
-@keyframes windowFlicker{0%,80%{opacity:1}85%{opacity:.3}90%{opacity:1}95%{opacity:.5}100%{opacity:1}}
-.city-antenna-glow{fill:var(--neon);filter:drop-shadow(0 0 6px var(--neon));animation:pulse 2s ease-in-out infinite}
-.city-antenna-glow.p{fill:var(--neon2);filter:drop-shadow(0 0 6px var(--neon2))}
-@keyframes pulse{50%{opacity:.3}}
-
 /* HERO CONTENT */
 .hero-inner{position:relative;z-index:5;text-align:center;padding:0 2rem}
 .hero-status{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.7rem;color:var(--neon);background:rgba(0,255,224,.06);border:1px solid rgba(0,255,224,.2);padding:.3rem .9rem;border-radius:99px;margin-bottom:2rem;opacity:0;animation:fadeUp .8s ease 3.5s forwards}
 .hero-status .dot{width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);animation:pulse 2s ease infinite}
 
 /* NAME REVEAL */
-.name-reveal{overflow:hidden;margin-bottom:.5rem}
-.name-first,.name-last{display:block;font-family:var(--display);font-weight:900;letter-spacing:-.02em;opacity:0}
-.name-first{font-size:clamp(3.5rem,12vw,9rem);color:var(--text);animation:nameSlideIn 1s cubic-bezier(.16,1,.3,1) 2.2s forwards}
-.name-last{font-size:clamp(3.5rem,12vw,9rem);background:linear-gradient(135deg,var(--neon),var(--neon3),var(--neon2),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:300% 300%;animation:nameSlideIn 1s cubic-bezier(.16,1,.3,1) 2.5s forwards,gradShift 6s ease infinite 3s;filter:drop-shadow(0 0 40px rgba(0,255,224,.3))}
-@keyframes nameSlideIn{from{opacity:0;transform:translateY(60px);filter:blur(12px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
-@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.name-reveal{margin-bottom:.5rem}
+.name-first,.name-last{display:block;font-family:var(--display);font-weight:900;letter-spacing:-.02em}
+.name-first{font-size:clamp(2.3rem,7.8vw,5.8rem);color:var(--text)}
+.name-last{font-size:clamp(2.3rem,7.8vw,5.8rem);position:relative;display:block}
+/* Letter-by-letter animation */
+.name-letter{display:inline-block;opacity:0;transform:translateY(22px) scale(1.25);filter:blur(10px);transition:opacity .55s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1),filter .5s ease}
+.name-letter.lit{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+/* Glitch on CLAUDET */
+.name-last::before,.name-last::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%;font-family:var(--display);font-weight:900;font-size:inherit;letter-spacing:-.02em;opacity:0;pointer-events:none}
+.name-last::before{color:var(--neon);animation:glitch1 5s 3.5s infinite}
+.name-last::after{color:var(--pink);animation:glitch2 5s 3.7s infinite}
+@keyframes glitch1{0%,82%,100%{opacity:0;transform:none;clip-path:none}83%{opacity:.85;transform:translate(-4px,0);clip-path:polygon(0 0,100% 0,100% 32%,0 32%)}84%{opacity:0}87%{opacity:.65;transform:translate(5px,0);clip-path:polygon(0 58%,100% 58%,100% 78%,0 78%)}88%{opacity:0}}
+@keyframes glitch2{0%,85%,100%{opacity:0;transform:none;clip-path:none}86%{opacity:.75;transform:translate(4px,0);clip-path:polygon(0 22%,100% 22%,100% 50%,0 50%)}87%{opacity:0}90%{opacity:.55;transform:translate(-3px,0);clip-path:polygon(0 68%,100% 68%,100% 88%,0 88%)}92%{opacity:0}}
 
 /* LETTER SPARKS */
 .spark-container{position:absolute;inset:0;pointer-events:none;z-index:10}
-.spark{position:absolute;width:3px;height:3px;border-radius:50%;animation:sparkFly 1s ease-out forwards}
-@keyframes sparkFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
+.spark{position:absolute;border-radius:50%;animation:sparkFly .9s ease-out forwards}
+@keyframes sparkFly{0%{opacity:1;transform:translate(0,0) scale(1)}60%{opacity:.8}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
 
 .hero-role{font-family:var(--mono);font-size:clamp(.78rem,1.8vw,.95rem);letter-spacing:.14em;text-transform:uppercase;margin:.8rem 0 .4rem;opacity:0;animation:fadeUp .8s ease 3s forwards}
 .hero-role span{background:linear-gradient(90deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -209,48 +204,12 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 
 <!-- ════════════════ HERO ════════════════ -->
 <section id="hero">
-<!-- CITYSCAPE SVG -->
-<div class="cityscape">
-<svg viewBox="0 0 1600 280" preserveAspectRatio="xMidYMax slice">
-<defs>
-<linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0a0d1a"/><stop offset="100%" stop-color="#05060c"/></linearGradient>
-</defs>
-<rect width="1600" height="280" fill="url(#skyG)"/>
-<!-- Buildings back layer -->
-<rect class="city-building" x="40" y="80" width="45" height="200"/><rect class="city-window" x="48" y="90" width="6" height="4" rx="1"/><rect class="city-window p" x="60" y="90" width="6" height="4" rx="1"/><rect class="city-window" x="48" y="100" width="6" height="4" rx="1"/><rect class="city-window pk" x="72" y="100" width="6" height="4" rx="1"/><rect class="city-window p" x="48" y="110" width="6" height="4" rx="1"/><rect class="city-window" x="60" y="110" width="6" height="4" rx="1"/><rect class="city-window" x="48" y="120" width="6" height="4" rx="1"/><rect class="city-window" x="60" y="130" width="6" height="4" rx="1"/>
-<rect class="city-building" x="100" y="40" width="35" height="240"/><rect class="city-window p" x="108" y="50" width="5" height="3" rx="1"/><rect class="city-window" x="120" y="50" width="5" height="3" rx="1"/><rect class="city-window pk" x="108" y="60" width="5" height="3" rx="1"/><rect class="city-window" x="120" y="60" width="5" height="3" rx="1"/><rect class="city-window p" x="108" y="70" width="5" height="3" rx="1"/><rect class="city-window" x="120" y="80" width="5" height="3" rx="1"/><rect class="city-window" x="108" y="90" width="5" height="3" rx="1"/>
-<line x1="117" y1="10" x2="117" y2="40" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow" cx="117" cy="8" r="2.5"/>
-<rect class="city-building" x="160" y="100" width="60" height="180"/><rect class="city-window" x="170" y="110" width="7" height="4" rx="1"/><rect class="city-window p" x="185" y="110" width="7" height="4" rx="1"/><rect class="city-window pk" x="200" y="110" width="7" height="4" rx="1"/><rect class="city-window" x="170" y="122" width="7" height="4" rx="1"/><rect class="city-window" x="185" y="122" width="7" height="4" rx="1"/><rect class="city-window p" x="200" y="122" width="7" height="4" rx="1"/><rect class="city-window" x="170" y="134" width="7" height="4" rx="1"/><rect class="city-window pk" x="185" y="134" width="7" height="4" rx="1"/>
-<rect class="city-building" x="250" y="50" width="40" height="230"/><polygon class="city-building" points="270,15 250,50 290,50"/><line x1="270" y1="0" x2="270" y2="15" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow p" cx="270" cy="-2" r="2"/>
-<rect class="city-window" x="258" y="58" width="5" height="3" rx="1"/><rect class="city-window p" x="274" y="58" width="5" height="3" rx="1"/><rect class="city-window" x="258" y="68" width="5" height="3" rx="1"/><rect class="city-window" x="274" y="68" width="5" height="3" rx="1"/><rect class="city-window pk" x="258" y="78" width="5" height="3" rx="1"/>
-<rect class="city-building" x="320" y="70" width="55" height="210"/><rect class="city-window p" x="330" y="80" width="6" height="4" rx="1"/><rect class="city-window" x="345" y="80" width="6" height="4" rx="1"/><rect class="city-window" x="360" y="80" width="6" height="4" rx="1"/><rect class="city-window pk" x="330" y="92" width="6" height="4" rx="1"/><rect class="city-window p" x="345" y="92" width="6" height="4" rx="1"/><rect class="city-window" x="360" y="92" width="6" height="4" rx="1"/>
-<rect class="city-building" x="410" y="30" width="30" height="250"/><line x1="425" y1="0" x2="425" y2="30" stroke="rgba(255,255,255,.08)" stroke-width="2"/><circle class="city-antenna-glow" cx="425" cy="-2" r="3"/><circle cx="425" cy="-2" r="8" fill="none" stroke="rgba(0,255,224,.06)" stroke-width="1"><animate attributeName="r" from="8" to="25" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" from=".3" to="0" dur="3s" repeatCount="indefinite"/></circle>
-<rect class="city-window" x="416" y="40" width="4" height="3" rx="1"/><rect class="city-window p" x="426" y="40" width="4" height="3" rx="1"/><rect class="city-window" x="416" y="50" width="4" height="3" rx="1"/><rect class="city-window pk" x="426" y="60" width="4" height="3" rx="1"/>
-<rect class="city-building" x="470" y="90" width="70" height="190"/><rect class="city-window" x="480" y="100" width="7" height="4" rx="1"/><rect class="city-window p" x="497" y="100" width="7" height="4" rx="1"/><rect class="city-window" x="514" y="100" width="7" height="4" rx="1"/><rect class="city-window pk" x="480" y="112" width="7" height="4" rx="1"/><rect class="city-window" x="497" y="112" width="7" height="4" rx="1"/><rect class="city-window p" x="514" y="112" width="7" height="4" rx="1"/>
-<rect class="city-building" x="570" y="55" width="35" height="225"/><rect class="city-window p" x="578" y="65" width="5" height="3" rx="1"/><rect class="city-window" x="590" y="65" width="5" height="3" rx="1"/><rect class="city-window" x="578" y="75" width="5" height="3" rx="1"/><rect class="city-window pk" x="590" y="75" width="5" height="3" rx="1"/>
-<rect class="city-building" x="630" y="110" width="50" height="170"/><rect class="city-window" x="638" y="120" width="6" height="4" rx="1"/><rect class="city-window p" x="654" y="120" width="6" height="4" rx="1"/><rect class="city-window" x="668" y="120" width="6" height="4" rx="1"/>
-<rect class="city-building" x="710" y="60" width="40" height="220"/><polygon class="city-building" points="730,25 710,60 750,60"/><line x1="730" y1="5" x2="730" y2="25" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow p" cx="730" cy="3" r="2.5"/><rect class="city-window" x="718" y="68" width="5" height="3" rx="1"/><rect class="city-window p" x="735" y="68" width="5" height="3" rx="1"/><rect class="city-window pk" x="718" y="78" width="5" height="3" rx="1"/>
-<rect class="city-building" x="780" y="85" width="55" height="195"/><rect class="city-window p" x="790" y="95" width="6" height="4" rx="1"/><rect class="city-window" x="805" y="95" width="6" height="4" rx="1"/><rect class="city-window" x="820" y="95" width="6" height="4" rx="1"/>
-<rect class="city-building" x="860" y="40" width="35" height="240"/><line x1="877" y1="10" x2="877" y2="40" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow" cx="877" cy="8" r="2.5"/><circle cx="877" cy="8" r="8" fill="none" stroke="rgba(0,255,224,.06)" stroke-width="1"><animate attributeName="r" from="8" to="22" dur="2.5s" repeatCount="indefinite"/><animate attributeName="opacity" from=".25" to="0" dur="2.5s" repeatCount="indefinite"/></circle>
-<rect class="city-window" x="868" y="50" width="5" height="3" rx="1"/><rect class="city-window p" x="880" y="50" width="5" height="3" rx="1"/>
-<rect class="city-building" x="920" y="100" width="60" height="180"/><rect class="city-window pk" x="930" y="110" width="6" height="4" rx="1"/><rect class="city-window" x="946" y="110" width="6" height="4" rx="1"/><rect class="city-window p" x="962" y="110" width="6" height="4" rx="1"/>
-<rect class="city-building" x="1010" y="65" width="40" height="215"/><rect class="city-window" x="1018" y="75" width="5" height="3" rx="1"/><rect class="city-window p" x="1034" y="75" width="5" height="3" rx="1"/>
-<rect class="city-building" x="1080" y="45" width="30" height="235"/><line x1="1095" y1="15" x2="1095" y2="45" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow" cx="1095" cy="13" r="2"/>
-<rect class="city-building" x="1130" y="95" width="55" height="185"/><rect class="city-window" x="1140" y="105" width="6" height="4" rx="1"/><rect class="city-window pk" x="1156" y="105" width="6" height="4" rx="1"/><rect class="city-window p" x="1172" y="105" width="6" height="4" rx="1"/>
-<rect class="city-building" x="1210" y="70" width="40" height="210"/><rect class="city-window p" x="1218" y="80" width="5" height="3" rx="1"/><rect class="city-window" x="1234" y="80" width="5" height="3" rx="1"/>
-<rect class="city-building" x="1280" y="50" width="35" height="230"/><polygon class="city-building" points="1297,20 1280,50 1315,50"/><line x1="1297" y1="0" x2="1297" y2="20" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow p" cx="1297" cy="-2" r="2.5"/><rect class="city-window" x="1288" y="58" width="5" height="3" rx="1"/>
-<rect class="city-building" x="1340" y="90" width="60" height="190"/><rect class="city-window p" x="1350" y="100" width="6" height="4" rx="1"/><rect class="city-window" x="1366" y="100" width="6" height="4" rx="1"/><rect class="city-window pk" x="1382" y="100" width="6" height="4" rx="1"/>
-<rect class="city-building" x="1430" y="110" width="50" height="170"/><rect class="city-window" x="1440" y="120" width="6" height="4" rx="1"/><rect class="city-window p" x="1456" y="120" width="6" height="4" rx="1"/>
-<rect class="city-building" x="1510" y="60" width="40" height="220"/><line x1="1530" y1="30" x2="1530" y2="60" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/><circle class="city-antenna-glow" cx="1530" cy="28" r="2"/>
-<rect class="city-building" x="1560" y="100" width="40" height="180"/><rect class="city-window pk" x="1570" y="110" width="5" height="3" rx="1"/>
-</svg>
-</div>
 
 <div class="hero-inner">
 <div class="hero-status rv"><span class="dot"></span>OPEN TO OPPORTUNITIES</div>
 <div class="name-reveal">
-<span class="name-first">ANTHONY</span>
-<span class="name-last">CLAUDET</span>
+<span class="name-first" id="name-first-el">ANTHONY</span>
+<span class="name-last" id="name-last-el" data-text="CLAUDET">CLAUDET</span>
 </div>
 <div class="hero-role"><span>Electrical Engineering</span> · Stevens Institute of Technology</div>
 <div class="hero-school">B.E. EE · Expected <b>May 2029</b> · GPA <b>3.85</b> · Hoboken, NJ</div>
@@ -432,43 +391,97 @@ document.querySelectorAll('.rv').forEach(e=>rvObs.observe(e));
 /* ══ NAV HIDE ══ */
 let lastS=0;window.addEventListener('scroll',()=>{const s=window.scrollY;document.getElementById('nav').classList.toggle('hide',s>lastS&&s>100);lastS=s},{passive:true});
 
-/* ══ SPARKS ON NAME ══ */
-(function(){const cont=document.getElementById('sparks');const hero=document.getElementById('hero');
-function burst(x,y){for(let i=0;i<12;i++){const s=document.createElement('div');s.className='spark';const a=Math.random()*Math.PI*2;const d=30+Math.random()*60;
-s.style.cssText=`left:${x}px;top:${y}px;background:hsl(${160+Math.random()*80},100%,70%);--sx:${Math.cos(a)*d}px;--sy:${Math.sin(a)*d}px`;
-cont.appendChild(s);setTimeout(()=>s.remove(),1000)}}
-setTimeout(()=>{const nm=document.querySelector('.name-last');if(!nm)return;const r=nm.getBoundingClientRect();const hr=hero.getBoundingClientRect();
-for(let i=0;i<8;i++)setTimeout(()=>burst(r.left-hr.left+Math.random()*r.width,r.top-hr.top+Math.random()*r.height),i*80)},2600)})();
+/* ══ NAME LETTER ANIMATION ══ */
+(function(){
+const cont=document.getElementById('sparks');const hero=document.getElementById('hero');
+function burst(x,y,n){for(let i=0;i<(n||10);i++){const s=document.createElement('div');s.className='spark';
+const a=Math.random()*Math.PI*2;const d=18+Math.random()*55;const hue=155+Math.random()*130;
+const sz=1+Math.random()*2.5;
+s.style.cssText=`left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;background:hsl(${hue},100%,72%);--sx:${Math.cos(a)*d}px;--sy:${Math.sin(a)*d}px`;
+cont.appendChild(s);setTimeout(()=>s.remove(),900)}}
 
-/* ══ GLOBAL ANIMATED BACKGROUND ══ */
+function animateName(){
+const firstEl=document.getElementById('name-first-el');const lastEl=document.getElementById('name-last-el');
+if(!firstEl||!lastEl)return;
+const heroRect=hero.getBoundingClientRect();
+// Split first name
+firstEl.innerHTML=[...'ANTHONY'].map(ch=>`<span class="name-letter">${ch}</span>`).join('');
+// Split last name with gradient-like colors
+const lc=['#00ffe0','#30d8e0','#5b7cf6','#8b5cf6','#a855f7','#cc4eb0','#ec4899'];
+lastEl.innerHTML=[...'CLAUDET'].map((ch,i)=>`<span class="name-letter" style="color:${lc[i]};text-shadow:0 0 28px ${lc[i]}99">${ch}</span>`).join('');
+
+const baseDelay=1600;const gap=105;
+const all=document.querySelectorAll('.name-letter');
+all.forEach((el,i)=>{setTimeout(()=>{
+el.classList.add('lit');
+const r=el.getBoundingClientRect();
+const x=r.left-heroRect.left+r.width/2;const y=r.top-heroRect.top+r.height/2;
+burst(x,y,9);
+if(el.parentElement===lastEl)setTimeout(()=>burst(x,y,5),160);
+},baseDelay+i*gap)});
+}
+window.addEventListener('load',()=>setTimeout(animateName,300));
+})();
+
+/* ══ GLOBAL ANIMATED BACKGROUND — GEOMETRIC WIREFRAMES ══ */
 (function(){
 const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
-function resize(){c.width=window.innerWidth;c.height=document.documentElement.scrollHeight}
+function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
 resize();window.addEventListener('resize',resize);
-const observer=new MutationObserver(resize);observer.observe(document.body,{childList:true,subtree:true});
-let t=0;const pts=[];for(let i=0;i<80;i++)pts.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0002,vy:(Math.random()-.5)*.0002,r:Math.random()*2+.5});
-
+function rxv(v,a){const[x,y,z]=v;return[x,y*Math.cos(a)-z*Math.sin(a),y*Math.sin(a)+z*Math.cos(a)]}
+function ryv(v,a){const[x,y,z]=v;return[x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)]}
+function rzv(v,a){const[x,y,z]=v;return[x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a),z]}
+function proj(v,cx,cy,sc){const fov=3.8;return[cx+v[0]*sc/(v[2]+fov),cy+v[1]*sc/(v[2]+fov),v[2]]}
+const phi=(1+Math.sqrt(5))/2;
+const iV=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[phi,0,-1],[-phi,0,1],[-phi,0,-1]].map(v=>{const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);return[v[0]/l,v[1]/l,v[2]/l]});
+const iE=[[0,1],[0,4],[0,5],[0,8],[0,10],[1,6],[1,7],[1,8],[1,10],[2,3],[2,4],[2,5],[2,9],[2,11],[3,6],[3,7],[3,9],[3,11],[4,8],[4,9],[5,10],[5,11],[6,8],[6,9],[7,10],[7,11],[8,9],[10,11],[4,5],[6,7]];
+const oV=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const oE=[[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
+const cV=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+const cE=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+const tV=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{const l=Math.sqrt(3);return[v[0]/l,v[1]/l,v[2]/l]});
+const tE=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+const shapes=[
+  {v:iV,e:iE,cx:.16,cy:.14,sc:95,rx:0,ry:.5,rz:.2,drx:.003,dry:.007,drz:.002,hue:170,opa:.55},
+  {v:oV,e:oE,cx:.84,cy:.1,sc:72,rx:1,ry:.3,rz:.5,drx:.005,dry:.004,drz:.003,hue:280,opa:.48},
+  {v:cV,e:cE,cx:.07,cy:.54,sc:68,rx:.2,ry:1,rz:.3,drx:.002,dry:.006,drz:.004,hue:200,opa:.42},
+  {v:iV,e:iE,cx:.93,cy:.65,sc:88,rx:.5,ry:.2,rz:.1,drx:.004,dry:.003,drz:.005,hue:175,opa:.52},
+  {v:tV,e:tE,cx:.5,cy:.28,sc:58,rx:.3,ry:.7,rz:.2,drx:.006,dry:.005,drz:.003,hue:235,opa:.38},
+  {v:oV,e:oE,cx:.28,cy:.78,sc:62,rx:.8,ry:.1,rz:.6,drx:.004,dry:.007,drz:.002,hue:283,opa:.42},
+  {v:cV,e:cE,cx:.72,cy:.46,sc:52,rx:.1,ry:.4,rz:.8,drx:.003,dry:.005,drz:.004,hue:205,opa:.36},
+  {v:tV,e:tE,cx:.88,cy:.38,sc:45,rx:.6,ry:.9,rz:.1,drx:.007,dry:.003,drz:.006,hue:190,opa:.32},
+];
+const liss=[
+  {cx:.5,cy:.08,a:3,b:2,d:Math.PI/2,sc:85,hue:170,opa:.12,ph:0},
+  {cx:.14,cy:.42,a:5,b:4,d:Math.PI/4,sc:62,hue:200,opa:.1,ph:.7},
+  {cx:.86,cy:.52,a:2,b:3,d:Math.PI/3,sc:70,hue:280,opa:.1,ph:1.2},
+  {cx:.5,cy:.88,a:4,b:3,d:Math.PI/2,sc:78,hue:230,opa:.09,ph:.4},
+];
+let t=0;
 function draw(){
 requestAnimationFrame(draw);t+=.003;
-const W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
-// Gradient bg
+const W=c.width,H=c.height;
 const g=ctx.createLinearGradient(0,0,0,H);
-g.addColorStop(0,'#05060c');g.addColorStop(.3,'#0a0818');g.addColorStop(.6,'#0d0a1e');g.addColorStop(1,'#05060c');
+g.addColorStop(0,'#05060c');g.addColorStop(.35,'#090817');g.addColorStop(.65,'#0c0a1d');g.addColorStop(1,'#05060c');
 ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-// Waves
-for(let w=0;w<4;w++){ctx.beginPath();
-const hue=160+w*30;ctx.strokeStyle=`hsla(${hue},100%,65%,.03)`;ctx.lineWidth=1.5;
-for(let x=0;x<W;x+=5){const y=H*.2+w*H*.18+Math.sin(x*.002+t*(1+w*.3))*60*(.5+w*.2)+Math.cos(x*.005+t*.7)*30;
-x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}
-// Particles
-pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>1)p.vx*=-1;if(p.y<0||p.y>1)p.vy*=-1;
-ctx.beginPath();ctx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2);
-ctx.fillStyle=`hsla(${170+p.x*60},80%,65%,.08)`;ctx.fill()});
-// Connections
-for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-const dx=(pts[i].x-pts[j].x)*W,dy=(pts[i].y-pts[j].y)*H;const d=Math.sqrt(dx*dx+dy*dy);
-if(d<150){ctx.beginPath();ctx.moveTo(pts[i].x*W,pts[i].y*H);ctx.lineTo(pts[j].x*W,pts[j].y*H);
-ctx.strokeStyle=`rgba(99,102,241,${(.08*(1-d/150))})`;ctx.lineWidth=.5;ctx.stroke()}}}
+shapes.forEach(s=>{
+  s.rx+=s.drx;s.ry+=s.dry;s.rz+=s.drz;
+  const cx=s.cx*W,cy=s.cy*H;
+  const pts=s.v.map(v=>{let p=rxv(v,s.rx);p=ryv(p,s.ry);p=rzv(p,s.rz);return proj(p,cx,cy,s.sc)});
+  s.e.forEach(([i,j])=>{const[ax,ay,az]=pts[i],[bx,by,bz]=pts[j];
+    const depth=((az+bz)/2+1.5)/3;const alpha=s.opa*(0.15+depth*.85);
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+    ctx.strokeStyle=`hsla(${s.hue},85%,68%,${alpha.toFixed(3)})`;ctx.lineWidth=.85;ctx.stroke();});
+});
+liss.forEach(l=>{ctx.beginPath();
+  for(let i=0;i<=240;i++){const tau=i/240*Math.PI*2;
+    const x=l.cx*W+Math.sin(l.a*tau+l.d+t*.25+l.ph)*l.sc;
+    const y=l.cy*H+Math.sin(l.b*tau+t*.18+l.ph*.7)*l.sc;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.strokeStyle=`hsla(${l.hue},80%,68%,${l.opa})`;ctx.lineWidth=1;ctx.stroke();});
+for(let w=0;w<3;w++){ctx.beginPath();ctx.strokeStyle=`hsla(${165+w*38},80%,65%,.016)`;ctx.lineWidth=1.2;
+  for(let x=0;x<W;x+=4){const y=H*(.38+w*.15)+Math.sin(x*.0018+t+w*1.1)*38+Math.cos(x*.004+t*.6)*20;
+  x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}}
 draw()})();
 
 /* ══ EM FIELD SIM ══ */

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Autonomous Robot — Anthony Claudet</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&family=Orbitron:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#00ffe0;--neon2:#a855f7;--neon3:#6366f1;--pink:#ec4899;--amber:#f59e0b;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.75);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Orbitron',sans-serif}
+:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#00ffe0;--neon2:#a855f7;--neon3:#6366f1;--pink:#ec4899;--amber:#f59e0b;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.75);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Inter',system-ui,sans-serif}
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:linear-gradient(var(--neon),var(--neon2));border-radius:3px}
@@ -197,13 +197,54 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* BG */
+/* BG — GEOMETRIC WIREFRAMES */
 (function(){const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
-function rs(){c.width=window.innerWidth;c.height=document.documentElement.scrollHeight}rs();window.addEventListener('resize',rs);
-let t=0;function draw(){requestAnimationFrame(draw);t+=.002;const W=c.width,H=c.height;
-const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05060c');g.addColorStop(.4,'#0a0818');g.addColorStop(.7,'#0d0a1e');g.addColorStop(1,'#05060c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-for(let w=0;w<3;w++){ctx.beginPath();ctx.strokeStyle=`hsla(${170+w*25},80%,55%,.025)`;ctx.lineWidth=1.5;
-for(let x=0;x<W;x+=6){const y=H*.15+w*H*.25+Math.sin(x*.002+t*(1+w*.3))*50;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}}draw()})();
+function rs(){c.width=window.innerWidth;c.height=window.innerHeight}rs();window.addEventListener('resize',rs);
+function rxv(v,a){const[x,y,z]=v;return[x,y*Math.cos(a)-z*Math.sin(a),y*Math.sin(a)+z*Math.cos(a)]}
+function ryv(v,a){const[x,y,z]=v;return[x*Math.cos(a)+z*Math.sin(a),y,-x*Math.sin(a)+z*Math.cos(a)]}
+function rzv(v,a){const[x,y,z]=v;return[x*Math.cos(a)-y*Math.sin(a),x*Math.sin(a)+y*Math.cos(a),z]}
+function proj(v,cx,cy,sc){const fov=3.8;return[cx+v[0]*sc/(v[2]+fov),cy+v[1]*sc/(v[2]+fov),v[2]]}
+const phi=(1+Math.sqrt(5))/2;
+const iV=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[phi,0,-1],[-phi,0,1],[-phi,0,-1]].map(v=>{const l=Math.sqrt(v[0]**2+v[1]**2+v[2]**2);return[v[0]/l,v[1]/l,v[2]/l]});
+const iE=[[0,1],[0,4],[0,5],[0,8],[0,10],[1,6],[1,7],[1,8],[1,10],[2,3],[2,4],[2,5],[2,9],[2,11],[3,6],[3,7],[3,9],[3,11],[4,8],[4,9],[5,10],[5,11],[6,8],[6,9],[7,10],[7,11],[8,9],[10,11],[4,5],[6,7]];
+const oV=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const oE=[[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
+const cV=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+const cE=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+const tV=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{const l=Math.sqrt(3);return[v[0]/l,v[1]/l,v[2]/l]});
+const tE=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+const shapes=[
+  {v:iV,e:iE,cx:.12,cy:.12,sc:88,rx:.2,ry:.8,rz:.1,drx:.003,dry:.006,drz:.002,hue:170,opa:.5},
+  {v:oV,e:oE,cx:.88,cy:.15,sc:68,rx:.5,ry:.2,rz:.4,drx:.005,dry:.004,drz:.003,hue:280,opa:.45},
+  {v:cV,e:cE,cx:.05,cy:.6,sc:62,rx:.1,ry:.9,rz:.2,drx:.002,dry:.005,drz:.004,hue:200,opa:.38},
+  {v:iV,e:iE,cx:.95,cy:.7,sc:80,rx:.4,ry:.1,rz:.3,drx:.004,dry:.003,drz:.005,hue:175,opa:.48},
+  {v:tV,e:tE,cx:.5,cy:.2,sc:52,rx:.6,ry:.4,rz:.5,drx:.006,dry:.005,drz:.003,hue:235,opa:.34},
+  {v:oV,e:oE,cx:.3,cy:.8,sc:58,rx:.3,ry:.7,rz:.1,drx:.004,dry:.006,drz:.002,hue:283,opa:.4},
+];
+const liss=[
+  {cx:.5,cy:.06,a:3,b:2,d:Math.PI/2,sc:80,hue:170,opa:.11,ph:.3},
+  {cx:.82,cy:.45,a:2,b:3,d:Math.PI/3,sc:65,hue:280,opa:.09,ph:1.1},
+  {cx:.18,cy:.55,a:5,b:4,d:Math.PI/4,sc:58,hue:200,opa:.09,ph:.6},
+];
+let t=0;
+function draw(){requestAnimationFrame(draw);t+=.003;const W=c.width,H=c.height;
+const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05060c');g.addColorStop(.35,'#090817');g.addColorStop(.65,'#0c0a1d');g.addColorStop(1,'#05060c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+shapes.forEach(s=>{s.rx+=s.drx;s.ry+=s.dry;s.rz+=s.drz;
+  const cx=s.cx*W,cy=s.cy*H;
+  const pts=s.v.map(v=>{let p=rxv(v,s.rx);p=ryv(p,s.ry);p=rzv(p,s.rz);return proj(p,cx,cy,s.sc)});
+  s.e.forEach(([i,j])=>{const[ax,ay,az]=pts[i],[bx,by,bz]=pts[j];
+    const depth=((az+bz)/2+1.5)/3;const alpha=s.opa*(0.15+depth*.85);
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+    ctx.strokeStyle=`hsla(${s.hue},85%,68%,${alpha.toFixed(3)})`;ctx.lineWidth=.85;ctx.stroke();});});
+liss.forEach(l=>{ctx.beginPath();
+  for(let i=0;i<=240;i++){const tau=i/240*Math.PI*2;
+    const x=l.cx*W+Math.sin(l.a*tau+l.d+t*.25+l.ph)*l.sc;
+    const y=l.cy*H+Math.sin(l.b*tau+t*.18+l.ph*.7)*l.sc;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}
+  ctx.strokeStyle=`hsla(${l.hue},80%,68%,${l.opa})`;ctx.lineWidth=1;ctx.stroke();});
+for(let w=0;w<2;w++){ctx.beginPath();ctx.strokeStyle=`hsla(${165+w*50},80%,65%,.015)`;ctx.lineWidth=1.2;
+  for(let x=0;x<W;x+=4){const y=H*(.4+w*.2)+Math.sin(x*.0018+t+w*1.3)*35;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}}
+draw()})();
 
 /* REVEAL */
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.08});
@@ -259,41 +300,46 @@ staticObs.push({mesh:m,x:d[0],z:d[2],hw:d[3]/2+.55,hd:d[5]/2+.55})});
 let placeMode=false;
 const placeMat=new THREE.MeshStandardMaterial({color:0x2a1060,emissive:0x150840,transparent:true,opacity:.8});
 
-// ── ROBOT (Wall-E inspired) ──
+// ── ROBOT (Wall-E inspired, forward = +X) ──
 const robot=new THREE.Group();
-// Body
-const bodyG=new THREE.BoxGeometry(1.3,.7,1);const bodyM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
-const body=new THREE.Mesh(bodyG,bodyM);body.position.y=.55;body.castShadow=true;robot.add(body);
-// Neck
-const neckG=new THREE.BoxGeometry(.3,.35,.3);const neckM=new THREE.MeshStandardMaterial({color:0x888888,roughness:.5});
-const neck=new THREE.Mesh(neckG,neckM);neck.position.set(0,1.1,0);robot.add(neck);
-// Head
-const headG=new THREE.BoxGeometry(.9,.45,.6);const headM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
-const head=new THREE.Mesh(headG,headM);head.position.set(0,1.5,.05);head.castShadow=true;robot.add(head);
-// Eyes (binoculars)
-const eyeG=new THREE.CylinderGeometry(.12,.12,.3,12);const eyeM=new THREE.MeshStandardMaterial({color:0x222222,roughness:.3});
-const eyeL=new THREE.Mesh(eyeG,eyeM);eyeL.rotation.x=Math.PI/2;eyeL.position.set(-.2,1.55,.4);robot.add(eyeL);
-const eyeR=new THREE.Mesh(eyeG,eyeM);eyeR.rotation.x=Math.PI/2;eyeR.position.set(.2,1.55,.4);robot.add(eyeR);
-// Eye lenses (glow)
-const lensG=new THREE.CircleGeometry(.1,12);const lensM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.8});
-const lL=new THREE.Mesh(lensG,lensM);lL.position.set(-.2,1.55,.56);robot.add(lL);
-const lR=new THREE.Mesh(lensG,lensM);lR.position.set(.2,1.55,.56);robot.add(lR);
-// Tracks
-const trkG=new THREE.BoxGeometry(1.5,.25,.18);const trkM=new THREE.MeshStandardMaterial({color:0x222222,roughness:.8});
-const tL=new THREE.Mesh(trkG,trkM);tL.position.set(0,.15,.55);robot.add(tL);
-const tR=new THREE.Mesh(trkG,trkM);tR.position.set(0,.15,-.55);robot.add(tR);
-// Arms
-const armG=new THREE.BoxGeometry(.15,.5,.15);const armM=new THREE.MeshStandardMaterial({color:0x888888});
-const aL=new THREE.Mesh(armG,armM);aL.position.set(-.75,.55,.0);aL.rotation.z=.3;robot.add(aL);
-const aR=new THREE.Mesh(armG,armM);aR.position.set(.75,.55,.0);aR.rotation.z=-.3;robot.add(aR);
-// Sensors (45 deg angled)
-const senG=new THREE.CylinderGeometry(.05,.05,.12,8);const senM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.6});
-const sC=new THREE.Mesh(senG,senM);sC.rotation.x=Math.PI/2;sC.position.set(0,.85,.55);robot.add(sC);
-const sL=new THREE.Mesh(senG,senM);sL.rotation.x=Math.PI/2;sL.rotation.y=Math.PI/4;sL.position.set(-.45,.85,.45);robot.add(sL);
-const sR=new THREE.Mesh(senG,senM);sR.rotation.x=Math.PI/2;sR.rotation.y=-Math.PI/4;sR.position.set(.45,.85,.45);robot.add(sR);
-// Breadboard on top
-const bbG=new THREE.BoxGeometry(.7,.04,.4);const bbM=new THREE.MeshStandardMaterial({color:0xdddddd});
-const bb=new THREE.Mesh(bbG,bbM);bb.position.set(-.1,.93,0);robot.add(bb);
+// Tracks — on ±Z sides, running along X axis
+const trkG=new THREE.BoxGeometry(1.5,.26,.22);const trkM=new THREE.MeshStandardMaterial({color:0x222222,roughness:.8});
+const tL=new THREE.Mesh(trkG,trkM);tL.position.set(0,.15,.58);robot.add(tL);
+const tR=new THREE.Mesh(trkG,trkM);tR.position.set(0,.15,-.58);robot.add(tR);
+// Body — slightly deeper in Z than X (wide stance)
+const bodyG=new THREE.BoxGeometry(.9,.72,1.1);const bodyM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
+const body=new THREE.Mesh(bodyG,bodyM);body.position.y=.51;body.castShadow=true;robot.add(body);
+// Three sensors on front face of body (+X side)
+const senG=new THREE.CylinderGeometry(.052,.052,.2,10);const senM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.7});
+// Center sensor — points +X via rotation.z = -π/2
+const sC=new THREE.Mesh(senG,senM);sC.rotation.z=-Math.PI/2;sC.position.set(.56,.51,0);robot.add(sC);
+// Left sensor — group angled 45° toward -Z
+const sLg=new THREE.Group();sLg.position.set(.50,.51,-.3);sLg.rotation.y=Math.PI/4;
+const sLc=new THREE.Mesh(senG,senM);sLc.rotation.z=-Math.PI/2;sLg.add(sLc);robot.add(sLg);
+// Right sensor — group angled 45° toward +Z
+const sRg=new THREE.Group();sRg.position.set(.50,.51,.3);sRg.rotation.y=-Math.PI/4;
+const sRc=new THREE.Mesh(senG,senM);sRc.rotation.z=-Math.PI/2;sRg.add(sRc);robot.add(sRg);
+// Arms — on ±Z sides, hanging at angle
+const armG=new THREE.BoxGeometry(.15,.58,.15);const armM=new THREE.MeshStandardMaterial({color:0x888888});
+const aL=new THREE.Mesh(armG,armM);aL.position.set(0,.56,.72);aL.rotation.x=-.28;robot.add(aL);
+const aR=new THREE.Mesh(armG,armM);aR.position.set(0,.56,-.72);aR.rotation.x=.28;robot.add(aR);
+// Neck — slightly forward (+X)
+const neckG=new THREE.BoxGeometry(.32,.36,.32);const neckM=new THREE.MeshStandardMaterial({color:0x888888,roughness:.5});
+const neck=new THREE.Mesh(neckG,neckM);neck.position.set(.16,1.02,0);robot.add(neck);
+// Head — Wall-E style: wide in Z, thin in X, faces +X direction
+const headG=new THREE.BoxGeometry(.58,.52,.98);const headM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
+const head=new THREE.Mesh(headG,headM);head.position.set(.12,1.44,0);head.castShadow=true;robot.add(head);
+// Eyes — cylinders pointing +X (rotation.z = -π/2 maps Y-axis → +X)
+const eyeG=new THREE.CylinderGeometry(.12,.12,.3,12);const eyeM=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.3});
+const eyeL=new THREE.Mesh(eyeG,eyeM);eyeL.rotation.z=-Math.PI/2;eyeL.position.set(.36,1.44,-.3);robot.add(eyeL);
+const eyeR=new THREE.Mesh(eyeG,eyeM);eyeR.rotation.z=-Math.PI/2;eyeR.position.set(.36,1.44,.3);robot.add(eyeR);
+// Eye lenses — circles facing +X (rotation.y = π/2)
+const lensG=new THREE.CircleGeometry(.1,16);const lensM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.9,side:THREE.DoubleSide});
+const lL=new THREE.Mesh(lensG,lensM);lL.rotation.y=Math.PI/2;lL.position.set(.52,1.44,-.3);robot.add(lL);
+const lR=new THREE.Mesh(lensG,lensM);lR.rotation.y=Math.PI/2;lR.position.set(.52,1.44,.3);robot.add(lR);
+// Breadboard on top of body
+const bbG=new THREE.BoxGeometry(.5,.04,.5);const bbM=new THREE.MeshStandardMaterial({color:0xdddddd});
+const bb=new THREE.Mesh(bbG,bbM);bb.position.set(0,.9,0);robot.add(bb);
 
 robot.position.set(-12,0,-12);scene.add(robot);
 
@@ -365,13 +411,13 @@ const simObs=new IntersectionObserver(es=>{active=es[0].isIntersecting},{thresho
 
 function loop(){
 requestAnimationFrame(loop);if(!active)return;
-const dt=1/60,accel=10,turn=3,friction=.88;
+const dt=1/60,accel=7.5,turn=3,friction=.88;
 
 // ROBOT
 if(vehicle==='robot'){
 if(mode==='manual'){
-if(keys['w'])rs.speed=Math.min(rs.speed+accel*dt,7);
-else if(keys['s'])rs.speed=Math.max(rs.speed-accel*dt,-4);
+if(keys['w'])rs.speed=Math.min(rs.speed+accel*dt,5.25);
+else if(keys['s'])rs.speed=Math.max(rs.speed-accel*dt,-3);
 else rs.speed*=friction;
 if(keys['a'])rs.rot+=turn*dt;
 if(keys['d'])rs.rot-=turn*dt;
@@ -384,17 +430,22 @@ if(dC<2&&dL<2&&dR<2){rs.speed=-3;rs.rot+=turn*dt*2}
 else if(dC<3){rs.speed=4;rs.rot+=(dL>dR?1:-1)*turn*dt*1.5}
 else if(dL<2){rs.rot-=turn*dt*1.2;rs.speed=4.5}
 else if(dR<2){rs.rot+=turn*dt*1.2;rs.speed=4.5}
-else{rs.speed=Math.min(rs.speed+accel*dt*.6,5.5)}
+else{rs.speed=Math.min(rs.speed+accel*dt*.6,4.125)}
 rs.speed*=.98}
 rs.vy-=18*dt;rs.y+=rs.vy*dt;if(rs.y<=0){rs.y=0;rs.vy=0;rs.grounded=true}
-const nx=rs.x+Math.cos(rs.rot)*rs.speed*dt,nz=rs.z-Math.sin(rs.rot)*rs.speed*dt;
+const vx=Math.cos(rs.rot)*rs.speed,vz=-Math.sin(rs.rot)*rs.speed;
+const nx=rs.x+vx*dt,nz=rs.z+vz*dt;
 const hit=collides(nx,nz);
 if(!hit){rs.x=nx;rs.z=nz}else if(typeof hit==='object'&&hit.mass!==undefined){
 const push=rs.speed*dt*2/Math.max(hit.mass,.5);hit.vx=(hit.x-rs.x)>0?push:-push;hit.vz=(hit.z-rs.z)>0?push:-push;
-rs.speed*=.5}else{rs.speed*=-.2}
+rs.speed*=.5}else{
+let slid=false;
+const hitX=collides(rs.x+vx*dt,rs.z);if(!hitX){rs.x+=vx*dt;slid=true;rs.speed*=.97}
+const hitZ=collides(rs.x,rs.z+vz*dt);if(!hitZ){rs.z+=vz*dt;slid=true;rs.speed*=.97}
+if(!slid)rs.speed*=-.15}
 robot.position.set(rs.x,rs.y,rs.z);robot.rotation.y=rs.rot;
-// Arm wave
-aL.rotation.z=.3+Math.sin(Date.now()*.003)*.1;aR.rotation.z=-.3-Math.sin(Date.now()*.003)*.1;
+// Arm wave (swing forward/back on X axis since arms are on ±Z sides)
+aL.rotation.x=-.28+Math.sin(Date.now()*.003)*.14;aR.rotation.x=.28-Math.sin(Date.now()*.003)*.14;
 const sC_=castSensor(rs.x,rs.z,rs.rot,0,8),sL_=castSensor(rs.x,rs.z,rs.rot,.7,6),sR_=castSensor(rs.x,rs.z,rs.rot,-.7,6);
 hud.textContent=`ROBOT · ${mode.toUpperCase()}\nSPD: ${Math.abs(rs.speed).toFixed(1)}\nL:${sL_.toFixed(1)} C:${sC_.toFixed(1)} R:${sR_.toFixed(1)}`;
 nL.position.set(rs.x,3,rs.z);
