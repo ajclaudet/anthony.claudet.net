@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Autonomous Robot — Anthony Claudet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&family=Orbitron:wght@700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#00ffe0;--neon2:#a855f7;--neon3:#6366f1;--pink:#ec4899;--amber:#f59e0b;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.75);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Orbitron',sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:linear-gradient(var(--neon),var(--neon2));border-radius:3px}
+
+#global-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+#global-bg canvas{width:100%;height:100%}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:.8rem 2.2rem;background:rgba(5,6,12,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.04)}
+.nav-logo{font-family:var(--display);font-weight:700;font-size:.85rem;text-decoration:none;letter-spacing:.08em;background:linear-gradient(135deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.back-link{font-family:var(--mono);font-size:.75rem;color:var(--neon);text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:gap .2s}
+.back-link:hover{gap:.7rem}
+
+section{padding:5rem 2rem;position:relative;z-index:1}
+.section-inner{max-width:1000px;margin:0 auto}
+
+.glass{background:rgba(10,14,28,.7);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.06);border-radius:12px;position:relative;overflow:hidden}
+
+.sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--neon);margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem}
+.sec-label::before{content:'//';opacity:.5}
+.sec-label::after{content:'';flex:1;max-width:50px;height:1px;background:currentColor;opacity:.4}
+.sec-title{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;letter-spacing:-.01em;line-height:1.15}
+
+.pf-badge{display:inline-block;font-family:var(--mono);font-size:.65rem;padding:.22rem .6rem;border-radius:99px;letter-spacing:.06em}
+.pf-badge.active{background:rgba(0,255,224,.1);border:1px solid rgba(0,255,224,.3);color:var(--neon)}
+.pf-badge.team{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber)}
+
+.pf-text{color:var(--muted);font-size:.9rem;margin-bottom:1rem;line-height:1.7}
+.pf-section-title{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--neon);margin:2.2rem 0 .8rem;display:flex;align-items:center;gap:.6rem}
+.pf-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.pf-callout{background:rgba(0,255,224,.03);border-left:2px solid var(--neon);padding:1rem 1.2rem;margin:1rem 0;font-size:.88rem;color:var(--text);line-height:1.7;border-radius:0 8px 8px 0}
+
+.pin-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.82rem}
+.pin-table th{background:rgba(0,255,224,.06);color:var(--neon);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-align:left;padding:.55rem .75rem;border-bottom:1px solid var(--border)}
+.pin-table td{padding:.5rem .75rem;border-bottom:1px solid rgba(255,255,255,.03);color:var(--muted)}
+.pin-table code{font-family:var(--mono);color:var(--text);font-size:.78rem;background:rgba(0,255,224,.06);padding:.1rem .35rem;border-radius:2px}
+
+.img-grid{display:grid;gap:1rem;margin:1.2rem 0}
+.img-grid.three{grid-template-columns:repeat(3,1fr)}
+.img-grid.two{grid-template-columns:repeat(2,1fr)}
+@media(max-width:600px){.img-grid.three,.img-grid.two{grid-template-columns:1fr}}
+.img-card{border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden;transition:border-color .2s,transform .2s}
+.img-card:hover{border-color:var(--neon);transform:translateY(-3px)}
+.img-card img{width:100%;display:block;aspect-ratio:4/3;object-fit:cover}
+.img-card figcaption{font-family:var(--mono);font-size:.68rem;color:var(--muted);padding:.55rem .75rem;background:rgba(10,14,28,.9);border-top:1px solid rgba(255,255,255,.03)}
+
+.code-block{background:rgba(8,10,20,.9);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin:1rem 0;overflow-x:auto;font-family:var(--mono);font-size:.76rem;line-height:1.8;color:var(--muted)}
+.code-block .kw{color:#c678dd}.code-block .fn{color:#61afef}.code-block .num{color:#d19a66}.code-block .cm{color:#5c6370;font-style:italic}.code-block .type{color:#e5c07b}
+
+.roadmap-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1rem 0}
+@media(max-width:600px){.roadmap-grid{grid-template-columns:1fr}}
+.roadmap-col h4{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;margin-bottom:.5rem}
+.roadmap-col.done h4{color:var(--neon)}.roadmap-col.wip h4{color:var(--amber)}
+.roadmap-col ul{list-style:none}.roadmap-col li{font-size:.84rem;color:var(--muted);padding:.25rem 0;display:flex;align-items:center;gap:.5rem}
+.roadmap-col.done li::before{content:'✓';color:var(--neon);font-size:.7rem;font-weight:700}
+.roadmap-col.wip li::before{content:'→';color:var(--amber);font-size:.7rem}
+
+.tag-list{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:1rem}
+.tag{font-family:var(--mono);font-size:.65rem;padding:.2rem .5rem;border-radius:99px;background:rgba(0,255,224,.06);border:1px solid rgba(0,255,224,.15);color:var(--neon)}
+
+/* SIM */
+.sim-wrapper{margin:1.5rem 0}
+.sim-container{position:relative;width:100%;height:550px;border:1px solid rgba(255,255,255,.06);border-radius:12px;overflow:hidden;background:#040610}
+.sim-container canvas{width:100%!important;height:100%!important;display:block}
+.sim-hud{position:absolute;top:10px;left:10px;font-family:var(--mono);font-size:.68rem;color:var(--neon);background:rgba(5,6,12,.88);border:1px solid rgba(255,255,255,.06);padding:.6rem .8rem;border-radius:8px;backdrop-filter:blur(8px);line-height:1.7;z-index:10;white-space:pre}
+.sim-help{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:.62rem;color:var(--muted);background:rgba(5,6,12,.88);border:1px solid rgba(255,255,255,.06);padding:.5rem .7rem;border-radius:8px;backdrop-filter:blur(8px);line-height:1.5;z-index:10;text-align:right}
+.sim-bar{display:flex;gap:.4rem;flex-wrap:wrap;padding:.8rem;background:rgba(10,14,28,.9);border-top:1px solid rgba(255,255,255,.04);border-radius:0 0 12px 12px}
+.sim-btn{font-family:var(--mono);font-size:.68rem;padding:.35rem .7rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--muted);cursor:pointer;border-radius:6px;transition:all .2s}
+.sim-btn:hover,.sim-btn.on{background:rgba(0,255,224,.1);border-color:var(--neon);color:var(--neon)}
+.sim-btn.amber.on{background:rgba(245,158,11,.1);border-color:var(--amber);color:var(--amber)}
+.sim-btn.purple.on{background:rgba(168,85,247,.1);border-color:var(--neon2);color:var(--neon2)}
+.sim-sep{width:1px;background:var(--border);margin:0 .3rem}
+
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.rv.vis{opacity:1;transform:translateY(0)}
+
+footer{border-top:1px solid rgba(255,255,255,.04);padding:1.3rem 2rem;font-family:var(--mono);font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;position:relative;z-index:1}
+footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+</style>
+</head>
+<body>
+<div id="global-bg"><canvas id="bg-canvas"></canvas></div>
+
+<nav>
+<a class="nav-logo" href="index.html">ANTHONY CLAUDET</a>
+<a class="back-link" href="index.html">← Back to portfolio</a>
+</nav>
+
+<section style="padding-top:6rem">
+<div class="section-inner">
+<div class="sec-label rv">project</div>
+<h2 class="sec-title rv" style="margin-bottom:.5rem">Autonomous Obstacle-Avoidance Robot</h2>
+<div class="rv" style="margin-bottom:.5rem;font-family:var(--mono);font-size:.78rem;color:var(--muted)">ENGR 122 — Field Sustainable Systems with Sensors · Stevens Institute of Technology · Spring 2026</div>
+<div class="rv"><span class="pf-badge active">IN PROGRESS</span> <span class="pf-badge team">TEAM OF 3</span></div>
+
+<p class="pf-text rv" style="margin-top:1.5rem"><strong style="color:var(--text)">Objective:</strong> Design, assemble, and program a tracked autonomous robot to guide visitors on a campus tour, navigating a course, detecting obstacles via ultrasonic sensors, and executing real-time avoidance — all without human input. The robot must safely reach four target locations in sequence using MQTT-provided coordinates.</p>
+
+<div class="pf-section-title rv">System Overview</div>
+<p class="pf-text rv">The robot is built on a Pololu Zumo tracked chassis controlled by a WeMos D1 R2 (ESP8266) microcontroller. Three HC-SR04 ultrasonic sensors provide spatial coverage across front-left, center, and front-right fields. A Feetech FT-SMC-2CH motor driver receives PWM signals to independently drive each tracked motor. An SSD1306 OLED display provides real-time sensor readout and system status.</p>
+<div class="pf-callout rv">All navigation runs on a single control loop: sensors poll sequentially, distances are evaluated against a 10 cm safety threshold, and the appropriate motion primitive — forward, reverse, turn left, turn right, or full stop — executes with calibrated PWM values. The OLED updates asynchronously every 500 ms using millis()-based scheduling.</div>
+
+<div class="pf-section-title rv">Hardware — Build Photos</div>
+<div class="img-grid three rv">
+<figure class="img-card"><img src="robot_frontview.jpg" alt="Robot front view" loading="lazy"/><figcaption>Early integration — WeMos D1 R2 and motor driver visible; wiring on breadboard.</figcaption></figure>
+<figure class="img-card"><img src="robot_backview.jpg" alt="Robot sensors" loading="lazy"/><figcaption>Three HC-SR04 sensors on front face — left, center, and right field coverage.</figcaption></figure>
+<figure class="img-card"><img src="robot_oledview.jpg" alt="OLED display" loading="lazy"/><figcaption>OLED display active — per-sensor distances and navigation status in real time.</figcaption></figure>
+</div>
+
+<div class="pf-section-title rv">Wiring &amp; Pin Mapping</div>
+<p class="pf-text rv">Compact breadboard atop the Zumo chassis. Motor power from onboard 4.8V NiMH battery; logic at 3.3V from the WeMos.</p>
+<div class="rv">
+<table class="pin-table">
+<thead><tr><th>Peripheral</th><th>Signal</th><th>WeMos Pin</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Motor Driver (FT-SMC-2CH)</td><td>Motor L</td><td><code>D6</code></td><td>Servo PWM via Servo.h</td></tr>
+<tr><td>Motor Driver (FT-SMC-2CH)</td><td>Motor R</td><td><code>D3</code></td><td>Servo PWM via Servo.h</td></tr>
+<tr><td>HC-SR04 (Center)</td><td>Trig / Echo</td><td><code>D4 / D5</code></td><td>Ultrasonic.h library</td></tr>
+<tr><td>HC-SR04 (Left)</td><td>Trig / Echo</td><td><code>RX / D0</code></td><td>Ultrasonic.h library</td></tr>
+<tr><td>HC-SR04 (Right)</td><td>Trig / Echo</td><td><code>D7 / D8</code></td><td>Ultrasonic.h library</td></tr>
+<tr><td>OLED SSD1306</td><td>SDA / SCL</td><td><code>D2 / D1</code></td><td>I²C bus, address 0x3C</td></tr>
+</tbody></table>
+</div>
+
+<div class="img-grid two rv">
+<figure class="img-card"><img src="wemosdiagram.jpg" alt="WeMos pinout" loading="lazy"/><figcaption>WeMos D1 R2 (ESP8266) Wi-Fi development board diagram.</figcaption></figure>
+<figure class="img-card"><img src="motorwiring.jpg" alt="Motor wiring" loading="lazy"/><figcaption>Wiring of WeMos D1 R2 to Feetech SMC 2CH &amp; DC motors.</figcaption></figure>
+</div>
+
+<div class="pf-section-title rv">Key Code — Obstacle Avoidance Logic</div>
+<p class="pf-text rv">C++, Arduino IDE. The control loop reads all three sensors, evaluates priority from most-blocked to least-blocked. Calibrated PWM values compensate for individual motor variance.</p>
+<div class="code-block rv"><span class="cm">// Sensor thresholds and calibrated PWM constants</span>
+<span class="kw">const int</span> <span class="type">SAFE_DISTANCE</span> = <span class="num">10</span>; <span class="cm">// cm — triggers avoidance</span>
+<span class="kw">const int</span> <span class="type">STOP</span> = <span class="num">90</span>; <span class="cm">// neutral PWM</span>
+<span class="kw">const int</span> <span class="type">L_FWD</span> = <span class="num">60</span>, <span class="type">R_FWD</span> = <span class="num">120</span>; <span class="cm">// motors mirror mounting</span>
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="kw">int</span> dC = sonarCenter.<span class="fn">read</span>(CM); <span class="fn">delay</span>(<span class="num">30</span>);
+  <span class="kw">int</span> dL = sonarLeft.<span class="fn">read</span>(CM);   <span class="fn">delay</span>(<span class="num">30</span>);
+  <span class="kw">int</span> dR = sonarRight.<span class="fn">read</span>(CM);  <span class="fn">delay</span>(<span class="num">30</span>);
+  <span class="kw">if</span> (dC &lt;= SAFE &amp;&amp; dL &lt;= SAFE &amp;&amp; dR &lt;= SAFE) {
+    <span class="fn">stopMotors</span>(); <span class="fn">delay</span>(<span class="num">200</span>);
+    <span class="fn">moveReverse</span>(); <span class="fn">delay</span>(<span class="num">400</span>);
+    <span class="fn">turnRight</span>(); <span class="fn">delay</span>(<span class="num">800</span>); <span class="cm">// U-turn escape</span>
+  } <span class="kw">else if</span> (dC &lt;= SAFE) {
+    (dL > dR) ? <span class="fn">turnLeft</span>() : <span class="fn">turnRight</span>();
+    <span class="fn">delay</span>(<span class="num">500</span>);
+  } <span class="kw">else if</span> (dL &lt;= SAFE) { <span class="fn">turnRight</span>(); <span class="fn">delay</span>(<span class="num">300</span>); }
+  <span class="kw">else if</span> (dR &lt;= SAFE) { <span class="fn">turnLeft</span>(); <span class="fn">delay</span>(<span class="num">300</span>); }
+  <span class="kw">else</span> { <span class="fn">moveForward</span>(); }
+  <span class="kw">if</span> (<span class="fn">millis</span>() - lastUpdate > <span class="num">500</span>) {
+    <span class="fn">updateDisplay</span>(dL, dC, dR);
+    lastUpdate = <span class="fn">millis</span>(); }
+}</div>
+
+<div class="pf-section-title rv">Competition Course</div>
+<figure class="img-card rv" style="max-width:700px"><img src="obstaclecourse.jpg" alt="Obstacle course" loading="lazy" style="aspect-ratio:auto"/><figcaption>Final course layout — robot navigates from SP to T1–T4, avoiding obstacles A–E.</figcaption></figure>
+
+<!-- ═══════ 3D SIMULATION ═══════ -->
+<div class="pf-section-title rv">3D Robot Sandbox</div>
+<p class="pf-text rv">Drive the robot with <strong style="color:var(--neon)">WASD</strong> + <strong style="color:var(--neon)">Space</strong> to jump, or toggle <strong style="color:var(--amber)">autonomous mode</strong>. Place blocks to build your own course. Switch to the <strong style="color:var(--neon2)">drone</strong> for aerial exploration.</p>
+<div class="sim-wrapper rv">
+<div class="sim-container" id="sim-box">
+<div class="sim-hud" id="hud">ROBOT · MANUAL\nSPD: 0\nL:-- C:-- R:--</div>
+<div class="sim-help" id="sim-help-text">WASD — move · SPACE — jump<br/>DRAG — orbit · SCROLL — zoom<br/>Click terrain — place block</div>
+</div>
+<div class="sim-bar" id="sim-bar">
+<button class="sim-btn on" id="btn-manual" onclick="setMode('manual')">MANUAL</button>
+<button class="sim-btn" id="btn-auto" onclick="setMode('auto')">AUTONOMOUS</button>
+<div class="sim-sep"></div>
+<button class="sim-btn" id="btn-robot" onclick="setVehicle('robot')">ROBOT</button>
+<button class="sim-btn purple" id="btn-drone" onclick="setVehicle('drone')">DRONE</button>
+<div class="sim-sep"></div>
+<button class="sim-btn" id="btn-place" onclick="togglePlace()">PLACE BLOCKS</button>
+<button class="sim-btn" onclick="clearBlocks()">CLEAR MAP</button>
+<button class="sim-btn" onclick="resetAll()">RESET</button>
+</div>
+</div>
+
+<div class="pf-section-title rv">Status &amp; Roadmap</div>
+<div class="roadmap-grid rv">
+<div class="roadmap-col done"><h4>✓ COMPLETED</h4><ul><li>Full chassis &amp; motor assembly</li><li>3-sensor obstacle detection</li><li>PWM motor calibration</li><li>Real-time OLED display</li><li>Sensor-based avoidance logic</li><li>Non-blocking display scheduling</li></ul></div>
+<div class="roadmap-col wip"><h4>→ IN DEVELOPMENT</h4><ul><li>Waypoint sequencing (T1–T4)</li><li>Turn angle calibration</li><li>Open-loop path timing</li><li>Reduce sensor crosstalk</li><li>3D-printed sensor bracket</li></ul></div>
+</div>
+<div class="tag-list rv"><span class="tag">C++</span><span class="tag">Arduino IDE</span><span class="tag">ESP8266</span><span class="tag">PWM</span><span class="tag">Ultrasonic</span><span class="tag">I²C / OLED</span><span class="tag">MQTT</span><span class="tag">Pololu Zumo</span></div>
+</div>
+</section>
+
+<footer><span>// anthony_claudet.net</span><span>© 2026 · Built with <span class="accent">voltage</span></span></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* BG */
+(function(){const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+function rs(){c.width=window.innerWidth;c.height=document.documentElement.scrollHeight}rs();window.addEventListener('resize',rs);
+let t=0;function draw(){requestAnimationFrame(draw);t+=.002;const W=c.width,H=c.height;
+const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05060c');g.addColorStop(.4,'#0a0818');g.addColorStop(.7,'#0d0a1e');g.addColorStop(1,'#05060c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let w=0;w<3;w++){ctx.beginPath();ctx.strokeStyle=`hsla(${170+w*25},80%,55%,.025)`;ctx.lineWidth=1.5;
+for(let x=0;x<W;x+=6){const y=H*.15+w*H*.25+Math.sin(x*.002+t*(1+w*.3))*50;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}}draw()})();
+
+/* REVEAL */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.08});
+document.querySelectorAll('.rv').forEach(e=>obs.observe(e));
+
+/* ═══ 3D SIMULATION ═══ */
+(function(){
+const box=document.getElementById('sim-box');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x040610);
+scene.fog=new THREE.FogExp2(0x040610,.012);
+const cam=new THREE.PerspectiveCamera(55,box.clientWidth/550,.1,300);
+cam.position.set(12,10,12);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setSize(box.clientWidth,550);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+box.insertBefore(renderer.domElement,box.firstChild);
+
+// Lights
+scene.add(new THREE.AmbientLight(0x334466,.5));
+const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(15,20,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.far=60;sun.shadow.camera.left=-25;sun.shadow.camera.right=25;sun.shadow.camera.top=25;sun.shadow.camera.bottom=-25;scene.add(sun);
+const nL=new THREE.PointLight(0x00ffe0,.4,25);nL.position.set(0,4,0);scene.add(nL);
+const pL=new THREE.PointLight(0xa855f7,.2,20);pL.position.set(-5,3,-5);scene.add(pL);
+
+// Floor
+const ARENA=30;
+const grid=new THREE.GridHelper(ARENA,ARENA,0x00ffe0,0x0c1525);scene.add(grid);
+const floorG=new THREE.PlaneGeometry(ARENA,ARENA);const floorM=new THREE.MeshStandardMaterial({color:0x060a14,roughness:.9});
+const floor=new THREE.Mesh(floorG,floorM);floor.rotation.x=-Math.PI/2;floor.position.y=-.01;floor.receiveShadow=true;scene.add(floor);
+
+// Walls
+const wallM=new THREE.MeshStandardMaterial({color:0x101830,transparent:true,opacity:.4});
+const hf=ARENA/2;
+[[hf,1,0,.3,2,ARENA],[-hf,1,0,.3,2,ARENA],[0,1,hf,ARENA,2,.3],[0,1,-hf,ARENA,2,.3]].forEach(w=>{
+const m=new THREE.Mesh(new THREE.BoxGeometry(w[3],w[4],w[5]),wallM);m.position.set(w[0],w[1],w[2]);scene.add(m)});
+
+// ── OBSTACLES (course-like) ──
+const obsMat=new THREE.MeshStandardMaterial({color:0x1a1040,emissive:0x080420,roughness:.5});
+const staticObs=[];const dynamicObs=[];
+const courseData=[
+[-8,0,-8,3,.8,1],[-8,0,-4,1,.8,3],[-4,0,-8,1,.8,2],
+[0,0,-6,5,.8,.6],[0,0,-2,1,.8,4],
+[5,0,-8,1,.8,5],[8,0,-5,3,.8,1],
+[-6,0,2,2,1,1],[0,0,3,1,1,6],[4,0,1,3,1,1],
+[-3,0,7,4,.8,1],[3,0,7,1,.8,3],[7,0,5,1,1,4],
+[-8,0,10,2,.8,2],[5,0,10,3,.8,1],
+];
+courseData.forEach(d=>{const g=new THREE.BoxGeometry(d[3],d[4],d[5]);const m=new THREE.Mesh(g,obsMat);
+m.position.set(d[0],d[4]/2,d[2]);m.castShadow=true;scene.add(m);
+staticObs.push({mesh:m,x:d[0],z:d[2],hw:d[3]/2+.55,hd:d[5]/2+.55})});
+
+// User-placed blocks
+let placeMode=false;
+const placeMat=new THREE.MeshStandardMaterial({color:0x2a1060,emissive:0x150840,transparent:true,opacity:.8});
+
+// ── ROBOT (Wall-E inspired) ──
+const robot=new THREE.Group();
+// Body
+const bodyG=new THREE.BoxGeometry(1.3,.7,1);const bodyM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
+const body=new THREE.Mesh(bodyG,bodyM);body.position.y=.55;body.castShadow=true;robot.add(body);
+// Neck
+const neckG=new THREE.BoxGeometry(.3,.35,.3);const neckM=new THREE.MeshStandardMaterial({color:0x888888,roughness:.5});
+const neck=new THREE.Mesh(neckG,neckM);neck.position.set(0,1.1,0);robot.add(neck);
+// Head
+const headG=new THREE.BoxGeometry(.9,.45,.6);const headM=new THREE.MeshStandardMaterial({color:0xc8a030,roughness:.4,metalness:.3});
+const head=new THREE.Mesh(headG,headM);head.position.set(0,1.5,.05);head.castShadow=true;robot.add(head);
+// Eyes (binoculars)
+const eyeG=new THREE.CylinderGeometry(.12,.12,.3,12);const eyeM=new THREE.MeshStandardMaterial({color:0x222222,roughness:.3});
+const eyeL=new THREE.Mesh(eyeG,eyeM);eyeL.rotation.x=Math.PI/2;eyeL.position.set(-.2,1.55,.4);robot.add(eyeL);
+const eyeR=new THREE.Mesh(eyeG,eyeM);eyeR.rotation.x=Math.PI/2;eyeR.position.set(.2,1.55,.4);robot.add(eyeR);
+// Eye lenses (glow)
+const lensG=new THREE.CircleGeometry(.1,12);const lensM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.8});
+const lL=new THREE.Mesh(lensG,lensM);lL.position.set(-.2,1.55,.56);robot.add(lL);
+const lR=new THREE.Mesh(lensG,lensM);lR.position.set(.2,1.55,.56);robot.add(lR);
+// Tracks
+const trkG=new THREE.BoxGeometry(1.5,.25,.18);const trkM=new THREE.MeshStandardMaterial({color:0x222222,roughness:.8});
+const tL=new THREE.Mesh(trkG,trkM);tL.position.set(0,.15,.55);robot.add(tL);
+const tR=new THREE.Mesh(trkG,trkM);tR.position.set(0,.15,-.55);robot.add(tR);
+// Arms
+const armG=new THREE.BoxGeometry(.15,.5,.15);const armM=new THREE.MeshStandardMaterial({color:0x888888});
+const aL=new THREE.Mesh(armG,armM);aL.position.set(-.75,.55,.0);aL.rotation.z=.3;robot.add(aL);
+const aR=new THREE.Mesh(armG,armM);aR.position.set(.75,.55,.0);aR.rotation.z=-.3;robot.add(aR);
+// Sensors (45 deg angled)
+const senG=new THREE.CylinderGeometry(.05,.05,.12,8);const senM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.6});
+const sC=new THREE.Mesh(senG,senM);sC.rotation.x=Math.PI/2;sC.position.set(0,.85,.55);robot.add(sC);
+const sL=new THREE.Mesh(senG,senM);sL.rotation.x=Math.PI/2;sL.rotation.y=Math.PI/4;sL.position.set(-.45,.85,.45);robot.add(sL);
+const sR=new THREE.Mesh(senG,senM);sR.rotation.x=Math.PI/2;sR.rotation.y=-Math.PI/4;sR.position.set(.45,.85,.45);robot.add(sR);
+// Breadboard on top
+const bbG=new THREE.BoxGeometry(.7,.04,.4);const bbM=new THREE.MeshStandardMaterial({color:0xdddddd});
+const bb=new THREE.Mesh(bbG,bbM);bb.position.set(-.1,.93,0);robot.add(bb);
+
+robot.position.set(-12,0,-12);scene.add(robot);
+
+// ── DRONE ──
+const drone=new THREE.Group();
+const dBodyG=new THREE.BoxGeometry(.8,.2,.8);const dBodyM=new THREE.MeshStandardMaterial({color:0x333366,roughness:.4,metalness:.4});
+const dBody=new THREE.Mesh(dBodyG,dBodyM);dBody.castShadow=true;drone.add(dBody);
+// Arms
+const dArmG=new THREE.BoxGeometry(1.2,.06,.06);const dArmM=new THREE.MeshStandardMaterial({color:0x444444});
+const dA1=new THREE.Mesh(dArmG,dArmM);dA1.rotation.y=Math.PI/4;drone.add(dA1);
+const dA2=new THREE.Mesh(dArmG,dArmM);dA2.rotation.y=-Math.PI/4;drone.add(dA2);
+// Rotors
+const rotG=new THREE.BoxGeometry(.4,.02,.04);const rotM=new THREE.MeshStandardMaterial({color:0x00ffe0,emissive:0x00ffe0,emissiveIntensity:.3});
+const rotors=[];
+[[-0.42,0.1,-0.42],[0.42,0.1,-0.42],[-0.42,0.1,0.42],[0.42,0.1,0.42]].forEach(p=>{
+const r=new THREE.Mesh(rotG,rotM);r.position.set(...p);drone.add(r);rotors.push(r)});
+// Light
+const dLight=new THREE.PointLight(0xa855f7,.3,8);dLight.position.set(0,-.2,0);drone.add(dLight);
+drone.position.set(-12,3,-10);scene.add(drone);
+drone.visible=false;
+
+// ── STATE ──
+const rs={x:-12,z:-12,rot:0,speed:0,vy:0,y:0,grounded:true};
+const ds={x:-12,z:-10,y:3,rot:0,speed:0,vy:0,vup:0};
+let mode='manual',vehicle='robot';
+const keys={};
+document.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+window.setMode=function(m){mode=m;
+document.getElementById('btn-manual').className='sim-btn'+(m==='manual'?' on':'');
+document.getElementById('btn-auto').className='sim-btn amber'+(m==='auto'?' on':'')};
+window.setVehicle=function(v){vehicle=v;drone.visible=v==='drone';
+document.getElementById('btn-robot').className='sim-btn'+(v==='robot'?' on':'');
+document.getElementById('btn-drone').className='sim-btn purple'+(v==='drone'?' on':'');
+document.getElementById('sim-help-text').innerHTML=v==='robot'?'WASD — move · SPACE — jump<br/>DRAG — orbit · SCROLL — zoom':'WASD — move · SHIFT/CTRL — up/down<br/>DRAG — orbit · SCROLL — zoom'};
+window.togglePlace=function(){placeMode=!placeMode;document.getElementById('btn-place').classList.toggle('on',placeMode)};
+window.clearBlocks=function(){dynamicObs.forEach(o=>scene.remove(o.mesh));dynamicObs.length=0};
+window.resetAll=function(){rs.x=-12;rs.z=-12;rs.rot=0;rs.speed=0;rs.y=0;rs.vy=0;ds.x=-12;ds.z=-10;ds.y=3;ds.rot=0;ds.speed=0};
+
+// Camera
+let isDrag=false,pmx=0,pmy=0,camT=Math.PI/4,camP=.55,camD=16;
+renderer.domElement.addEventListener('mousedown',e=>{if(placeMode&&!e.shiftKey){
+const rect=box.getBoundingClientRect();const mx=(e.clientX-rect.left)/rect.width*2-1;const my=-((e.clientY-rect.top)/rect.height)*2+1;
+const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2(mx,my),cam);
+const hits=ray.intersectObject(floor);
+if(hits.length){const p=hits[0].point;const sz=.8+Math.random()*1.5;const sy=.5+Math.random()*1;
+const g=new THREE.BoxGeometry(sz,sy,sz);const m=new THREE.Mesh(g,placeMat.clone());
+m.position.set(Math.round(p.x),sy/2,Math.round(p.z));m.castShadow=true;scene.add(m);
+const mass=sz*sy*sz*2;
+dynamicObs.push({mesh:m,x:m.position.x,z:m.position.z,hw:sz/2+.55,hd:sz/2+.55,mass,vx:0,vz:0});return}}
+isDrag=true;pmx=e.clientX;pmy=e.clientY});
+window.addEventListener('mouseup',()=>isDrag=false);
+renderer.domElement.addEventListener('mousemove',e=>{if(!isDrag)return;camT-=(e.clientX-pmx)*.005;camP=Math.max(.1,Math.min(1.5,camP-(e.clientY-pmy)*.005));pmx=e.clientX;pmy=e.clientY});
+renderer.domElement.addEventListener('wheel',e=>{camD=Math.max(4,Math.min(35,camD+e.deltaY*.02));e.preventDefault()},{passive:false});
+// Touch
+renderer.domElement.addEventListener('touchstart',e=>{if(e.touches.length===1){isDrag=true;pmx=e.touches[0].clientX;pmy=e.touches[0].clientY}},{passive:true});
+renderer.domElement.addEventListener('touchmove',e=>{if(!isDrag||!e.touches.length)return;camT-=(e.touches[0].clientX-pmx)*.005;camP=Math.max(.1,Math.min(1.5,camP-(e.touches[0].clientY-pmy)*.005));pmx=e.touches[0].clientX;pmy=e.touches[0].clientY},{passive:true});
+renderer.domElement.addEventListener('touchend',()=>isDrag=false);
+
+function allObs(){return staticObs.concat(dynamicObs)}
+function collides(nx,nz,skip){if(Math.abs(nx)>hf-.5||Math.abs(nz)>hf-.5)return true;
+for(const o of allObs()){if(o===skip)continue;if(Math.abs(nx-o.x)<o.hw&&Math.abs(nz-o.z)<o.hd)return o}return false}
+function castSensor(ox,oz,rot,angle,range){const a=rot+angle;const dx=Math.cos(a),dz=-Math.sin(a);
+for(let d=.5;d<range;d+=.25){if(collides(ox+dx*d,oz+dz*d))return d}return range}
+
+const hud=document.getElementById('hud');let active=false;
+const simObs=new IntersectionObserver(es=>{active=es[0].isIntersecting},{threshold:.05});simObs.observe(box);
+
+function loop(){
+requestAnimationFrame(loop);if(!active)return;
+const dt=1/60,accel=10,turn=3,friction=.88;
+
+// ROBOT
+if(vehicle==='robot'){
+if(mode==='manual'){
+if(keys['w'])rs.speed=Math.min(rs.speed+accel*dt,7);
+else if(keys['s'])rs.speed=Math.max(rs.speed-accel*dt,-4);
+else rs.speed*=friction;
+if(keys['a'])rs.rot+=turn*dt;
+if(keys['d'])rs.rot-=turn*dt;
+if(keys[' ']&&rs.grounded){rs.vy=7;rs.grounded=false}
+}else{
+const dC=castSensor(rs.x,rs.z,rs.rot,0,8);
+const dL=castSensor(rs.x,rs.z,rs.rot,.7,6);
+const dR=castSensor(rs.x,rs.z,rs.rot,-.7,6);
+if(dC<2&&dL<2&&dR<2){rs.speed=-3;rs.rot+=turn*dt*2}
+else if(dC<3){rs.speed=4;rs.rot+=(dL>dR?1:-1)*turn*dt*1.5}
+else if(dL<2){rs.rot-=turn*dt*1.2;rs.speed=4.5}
+else if(dR<2){rs.rot+=turn*dt*1.2;rs.speed=4.5}
+else{rs.speed=Math.min(rs.speed+accel*dt*.6,5.5)}
+rs.speed*=.98}
+rs.vy-=18*dt;rs.y+=rs.vy*dt;if(rs.y<=0){rs.y=0;rs.vy=0;rs.grounded=true}
+const nx=rs.x+Math.cos(rs.rot)*rs.speed*dt,nz=rs.z-Math.sin(rs.rot)*rs.speed*dt;
+const hit=collides(nx,nz);
+if(!hit){rs.x=nx;rs.z=nz}else if(typeof hit==='object'&&hit.mass!==undefined){
+const push=rs.speed*dt*2/Math.max(hit.mass,.5);hit.vx=(hit.x-rs.x)>0?push:-push;hit.vz=(hit.z-rs.z)>0?push:-push;
+rs.speed*=.5}else{rs.speed*=-.2}
+robot.position.set(rs.x,rs.y,rs.z);robot.rotation.y=rs.rot;
+// Arm wave
+aL.rotation.z=.3+Math.sin(Date.now()*.003)*.1;aR.rotation.z=-.3-Math.sin(Date.now()*.003)*.1;
+const sC_=castSensor(rs.x,rs.z,rs.rot,0,8),sL_=castSensor(rs.x,rs.z,rs.rot,.7,6),sR_=castSensor(rs.x,rs.z,rs.rot,-.7,6);
+hud.textContent=`ROBOT · ${mode.toUpperCase()}\nSPD: ${Math.abs(rs.speed).toFixed(1)}\nL:${sL_.toFixed(1)} C:${sC_.toFixed(1)} R:${sR_.toFixed(1)}`;
+nL.position.set(rs.x,3,rs.z);
+}
+
+// DRONE
+if(vehicle==='drone'){
+drone.visible=true;
+if(keys['w'])ds.speed=Math.min(ds.speed+6*dt,5);
+else if(keys['s'])ds.speed=Math.max(ds.speed-6*dt,-3);
+else ds.speed*=.92;
+if(keys['a'])ds.rot+=2.5*dt;
+if(keys['d'])ds.rot-=2.5*dt;
+if(keys['shift'])ds.vup=Math.min(ds.vup+5*dt,4);
+else if(keys['control'])ds.vup=Math.max(ds.vup-5*dt,-4);
+else ds.vup*=.9;
+ds.x+=Math.cos(ds.rot)*ds.speed*dt;ds.z-=Math.sin(ds.rot)*ds.speed*dt;
+ds.y=Math.max(.5,Math.min(15,ds.y+ds.vup*dt));
+drone.position.set(ds.x,ds.y,ds.z);drone.rotation.y=ds.rot;
+drone.rotation.z=-ds.speed*.04;drone.rotation.x=ds.vup*.02;
+rotors.forEach(r=>r.rotation.y+=.5);
+hud.textContent=`DRONE\nALT: ${ds.y.toFixed(1)}\nSPD: ${Math.abs(ds.speed).toFixed(1)}`;
+nL.position.set(ds.x,ds.y+2,ds.z)}
+
+// Dynamic block physics
+dynamicObs.forEach(o=>{if(!o.vx&&!o.vz)return;
+o.x+=o.vx;o.z+=o.vz;o.vx*=.9;o.vz*=.9;
+if(Math.abs(o.vx)<.001)o.vx=0;if(Math.abs(o.vz)<.001)o.vz=0;
+o.x=Math.max(-hf+1,Math.min(hf-1,o.x));o.z=Math.max(-hf+1,Math.min(hf-1,o.z));
+o.mesh.position.x=o.x;o.mesh.position.z=o.z});
+
+// Camera
+const tgt=vehicle==='robot'?rs:ds;
+const tx=tgt.x+Math.sin(camT)*Math.cos(camP)*camD;
+const ty=(tgt.y||0)+Math.sin(camP)*camD;
+const tz=tgt.z+Math.cos(camT)*Math.cos(camP)*camD;
+cam.position.lerp(new THREE.Vector3(tx,ty,tz),.07);
+cam.lookAt(tgt.x,tgt.y||0+.5,tgt.z);
+pL.position.set(tgt.x-3,3,tgt.z-3);
+renderer.render(scene,cam)}
+loop();
+
+window.addEventListener('resize',()=>{const w=box.clientWidth;renderer.setSize(w,550);cam.aspect=w/550;cam.updateProjectionMatrix()});
+})();
+</script>
+</body>
+</html>

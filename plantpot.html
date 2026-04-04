@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>IoT Smart Plant Pot — Anthony Claudet</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;700;900&family=Orbitron:wght@700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05060c;--surface:#0a0d18;--border:#151a30;--neon:#a855f7;--neon2:#00ffe0;--pink:#ec4899;--amber:#f59e0b;--text:#dce4f0;--muted:#4a5a78;--card:rgba(10,14,28,.75);--mono:'JetBrains Mono',monospace;--sans:'Inter',system-ui,sans-serif;--display:'Orbitron',sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:linear-gradient(var(--neon),var(--pink));border-radius:3px}
+#global-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+#global-bg canvas{width:100%;height:100%}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:.8rem 2.2rem;background:rgba(5,6,12,.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.04)}
+.nav-logo{font-family:var(--display);font-weight:700;font-size:.85rem;text-decoration:none;letter-spacing:.08em;background:linear-gradient(135deg,var(--neon2),var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.back-link{font-family:var(--mono);font-size:.75rem;color:var(--neon);text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:gap .2s}
+.back-link:hover{gap:.7rem}
+section{padding:5rem 2rem;position:relative;z-index:1}
+.section-inner{max-width:1000px;margin:0 auto}
+.sec-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--neon);margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem}
+.sec-label::before{content:'//';opacity:.5}
+.sec-label::after{content:'';flex:1;max-width:50px;height:1px;background:currentColor;opacity:.4}
+.sec-title{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;letter-spacing:-.01em;line-height:1.15}
+.pf-badge{display:inline-block;font-family:var(--mono);font-size:.65rem;padding:.22rem .6rem;border-radius:99px;letter-spacing:.06em}
+.pf-badge.done{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);color:var(--neon)}
+.pf-badge.team{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber)}
+.pf-text{color:var(--muted);font-size:.9rem;margin-bottom:1rem;line-height:1.7}
+.pf-section-title{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--neon);margin:2.2rem 0 .8rem;display:flex;align-items:center;gap:.6rem}
+.pf-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.pf-callout{background:rgba(168,85,247,.03);border-left:2px solid var(--neon);padding:1rem 1.2rem;margin:1rem 0;font-size:.88rem;color:var(--text);line-height:1.7;border-radius:0 8px 8px 0}
+.pin-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.82rem}
+.pin-table th{background:rgba(168,85,247,.06);color:var(--neon);font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-align:left;padding:.55rem .75rem;border-bottom:1px solid var(--border)}
+.pin-table td{padding:.5rem .75rem;border-bottom:1px solid rgba(255,255,255,.03);color:var(--muted)}
+.pin-table code{font-family:var(--mono);color:var(--text);font-size:.78rem;background:rgba(168,85,247,.08);padding:.1rem .35rem;border-radius:2px}
+.img-card{border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden;transition:border-color .2s,transform .2s}
+.img-card:hover{border-color:var(--neon);transform:translateY(-3px)}
+.img-card img{width:100%;display:block;aspect-ratio:auto}
+.img-card figcaption{font-family:var(--mono);font-size:.68rem;color:var(--muted);padding:.55rem .75rem;background:rgba(10,14,28,.9);border-top:1px solid rgba(255,255,255,.03)}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1rem 0}
+@media(max-width:500px){.stats-row{grid-template-columns:1fr}}
+.stat-box{background:rgba(10,14,28,.7);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:1.2rem;text-align:center}
+.stat-num{font-size:1.8rem;font-weight:900;font-family:var(--display);background:linear-gradient(135deg,var(--neon),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-desc{font-size:.72rem;color:var(--muted);font-family:var(--mono);margin-top:.3rem}
+.lesson-card{background:rgba(10,14,28,.6);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:1.1rem;margin:.6rem 0}
+.lesson-card strong{color:var(--text);font-size:.9rem}
+.lesson-card p{color:var(--muted);font-size:.84rem;margin-top:.25rem}
+.tag-list{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:1rem}
+.tag{font-family:var(--mono);font-size:.65rem;padding:.2rem .5rem;border-radius:99px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);color:var(--neon)}
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.rv.vis{opacity:1;transform:translateY(0)}
+footer{border-top:1px solid rgba(255,255,255,.04);padding:1.3rem 2rem;font-family:var(--mono);font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;position:relative;z-index:1}
+footer .accent{background:linear-gradient(90deg,var(--neon),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+</style>
+</head>
+<body>
+<div id="global-bg"><canvas id="bg-canvas"></canvas></div>
+<nav>
+<a class="nav-logo" href="index.html">ANTHONY CLAUDET</a>
+<a class="back-link" href="index.html">← Back to portfolio</a>
+</nav>
+
+<section style="padding-top:6rem">
+<div class="section-inner">
+<div class="sec-label rv">project</div>
+<h2 class="sec-title rv" style="margin-bottom:.5rem">IoT Smart Plant Pot</h2>
+<div class="rv" style="margin-bottom:.5rem;font-family:var(--mono);font-size:.78rem;color:var(--muted)">ENGR 111 — Introduction to Engineering Design · Stevens Institute of Technology · Fall 2025</div>
+<div class="rv"><span class="pf-badge done">COMPLETE</span> <span class="pf-badge team">TEAM OF 3</span></div>
+
+<p class="pf-text rv" style="margin-top:1.5rem"><strong style="color:var(--text)">Objective:</strong> Design and build a fully autonomous plant watering system that monitors soil humidity, air temperature, and ambient light, and dispenses calibrated water based on sensor readings and a programmed schedule — eliminating the need for human intervention.</p>
+
+<div class="pf-section-title rv">Problem Statement</div>
+<p class="pf-text rv">Home plants frequently fail due to irregular watering and the absence of condition-aware care. Most watering solutions rely on timers alone or lack the embedded sensing needed to respond to actual environmental conditions. This project targeted a fully integrated solution: a compact enclosure housing electronics, sensors, pump, and water supply that can be deployed next to any houseplant and operate autonomously for extended periods.</p>
+
+<div class="pf-section-title rv">System Architecture</div>
+<div class="pf-callout rv">The system uses an ESP32-based WeMos MH-ET Live MiniKit microcontroller connected to a DHT11 temperature/humidity sensor, a capacitive soil moisture sensor, and an LDR photocell. A Feetech motor controller drives a miniature submersible pump. All sensor data is published over WiFi to a HiveMQ MQTT broker at 10-minute intervals using non-blocking millis() scheduling. The pump delivers 20 mL on a 24-hour base schedule, with an additional 20 mL triggered when soil humidity drops below threshold.</div>
+
+<div class="pf-section-title rv">Mechanical Design — SolidWorks Enclosure</div>
+<p class="pf-text rv">The enclosure was designed in SolidWorks and 3D printed on a FlashForge Adventurer 5M Pro. A central internal wall physically separates the wet side (pump and water bottle) from the dry side (electronics, breadboard, sensors). Key constraints: 8-hour max print time and practical FDM manufacturability.</p>
+<figure class="img-card rv" style="max-width:500px"><img src="systemview.jpg" alt="SolidWorks assembly" loading="lazy"/><figcaption>SolidWorks assembly renders — component placement, internal dividing wall, and bottle/pump mounting.</figcaption></figure>
+
+<div class="pf-section-title rv">Electrical Design</div>
+<p class="pf-text rv">All sensors share a parallel 3.3V/GND rail on the breadboard, with independent signal lines to the ESP32. Pump control runs through the motor controller at 3.3V. A critical early failure — accidentally powering the pump from the 5V rail — caused board damage from overvoltage stress (visible smoke). Recovery involved systematic pin-by-pin verification and a color-coded rewiring approach.</p>
+<div class="rv">
+<table class="pin-table">
+<thead><tr><th>Component</th><th>ESP32 Pin</th><th>Function</th></tr></thead>
+<tbody>
+<tr><td>DHT11 sensor</td><td><code>GPIO 32</code></td><td>Temperature &amp; humidity (digital)</td></tr>
+<tr><td>Photocell (LDR)</td><td><code>GPIO 34</code></td><td>Illuminance (analog ADC)</td></tr>
+<tr><td>Soil moisture sensor</td><td><code>GPIO 35</code></td><td>Soil humidity (analog ADC)</td></tr>
+<tr><td>Pump control</td><td><code>GPIO 2</code></td><td>Motor driver signal (3.3V)</td></tr>
+</tbody></table>
+</div>
+
+<div class="pf-section-title rv">Software &amp; IoT Layer</div>
+<p class="pf-text rv">The firmware manages two parallel scheduling concerns: sensor publishing every 10 minutes and a 24-hour base pump cycle, plus conditional pump triggering when soil humidity falls below threshold. An early bug caused the MQTT publish interval to fail: the delay() function blocked all loop execution. This was resolved by replacing all time-based delays with millis() comparisons, making the loop fully non-blocking.</p>
+<p class="pf-text rv">Illuminance was computed from the ADC voltage using a derived quadratic relationship calibrated from bench measurements. Post-deployment analysis revealed the photocell had been wired in reverse polarity, causing inverted readings — identified as a hardware error, not a code fault.</p>
+
+<div class="pf-section-title rv">Deployment Results — 5-Day Field Test</div>
+<div class="stats-row rv">
+<div class="stat-box"><div class="stat-num">5</div><div class="stat-desc">Days deployed</div></div>
+<div class="stat-box"><div class="stat-num">~144</div><div class="stat-desc">MQTT publishes</div></div>
+<div class="stat-box"><div class="stat-num">20 mL</div><div class="stat-desc">Base daily dispense</div></div>
+</div>
+<p class="pf-text rv">Temperature and soil humidity readings were validated as reliable over the full deployment. Serial monitor confirmed successful WiFi connection, IP assignment, MQTT broker handshake, and pump trigger events. Illuminance readings were unreliable due to inverted photocell wiring — the sole outstanding hardware error.</p>
+
+<div class="pf-section-title rv">Key Engineering Lessons</div>
+<div class="lesson-card rv"><strong>Debug hardware before software.</strong><p>Multiple sessions were lost attributing hardware faults to code errors. A multimeter should be a first-line debug tool, not a last resort.</p></div>
+<div class="lesson-card rv"><strong>Non-blocking scheduling is a system design choice.</strong><p>The conflict between 10-minute publish intervals and 24-hour pump cycles is unsolvable with delay(); it required treating timing as a system-level architecture problem.</p></div>
+<div class="lesson-card rv"><strong>Modular iteration beats full redesign.</strong><p>When the DHT mount snapped, printing a small 30-minute supplemental bracket was faster and safer than cycling the entire enclosure through another print job.</p></div>
+
+<div class="tag-list rv"><span class="tag">ESP32</span><span class="tag">IoT / MQTT</span><span class="tag">DHT11</span><span class="tag">SolidWorks</span><span class="tag">3D Printing</span><span class="tag">Motor Driver</span><span class="tag">WiFi / HiveMQ</span><span class="tag">Analog Sensors</span></div>
+</div>
+</section>
+
+<footer><span>// anthony_claudet.net</span><span>© 2026 · Built with <span class="accent">voltage</span></span></footer>
+
+<script>
+/* BG */
+(function(){const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+function rs(){c.width=window.innerWidth;c.height=document.documentElement.scrollHeight}rs();window.addEventListener('resize',rs);
+let t=0;function draw(){requestAnimationFrame(draw);t+=.002;const W=c.width,H=c.height;
+const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#05060c');g.addColorStop(.4,'#0c0818');g.addColorStop(.7,'#100a20');g.addColorStop(1,'#05060c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+for(let w=0;w<3;w++){ctx.beginPath();ctx.strokeStyle=`hsla(${270+w*20},70%,50%,.025)`;ctx.lineWidth=1.5;
+for(let x=0;x<W;x+=6){const y=H*.15+w*H*.25+Math.sin(x*.002+t*(1+w*.3))*50;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}}draw()})();
+/* REVEAL */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.08});
+document.querySelectorAll('.rv').forEach(e=>obs.observe(e));
+</script>
+</body>
+</html>
