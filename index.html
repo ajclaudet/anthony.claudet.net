@@ -20,7 +20,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:
 /* ══ LOADER ══ */
 #loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg)}
 #loader.done{display:none}
-#loader-icon{width:160px;height:160px;animation:loaderPulse 2s ease-in-out forwards}
+#loader-icon{width:280px;height:280px;animation:loaderPulse 2s ease-in-out forwards}
 #loader-icon canvas{width:100%;height:100%}
 @keyframes loaderPulse{0%,50%,100%{transform:scale(1)}25%,75%{transform:scale(1.5);filter:drop-shadow(0 0 25px rgba(130,180,255,.5))}}
 
@@ -47,9 +47,9 @@ nav.hide{transform:translateY(-100%)}
 
 /* NAME REVEAL */
 .name-reveal{margin-bottom:.5rem}
-.name-first,.name-last{display:block;font-family:var(--display);font-weight:900;letter-spacing:-.01em}
+.name-first,.name-last{display:block;font-family:var(--display);font-weight:900;letter-spacing:-.01em;line-height:1.05}
 .name-first{font-size:clamp(2.3rem,7.8vw,5.8rem);color:var(--text)}
-.name-last{font-size:clamp(2.3rem,7.8vw,5.8rem);position:relative;display:block}
+.name-last{font-size:clamp(2.3rem,7.8vw,5.8rem);position:relative;display:block;margin-top:-.15em}
 /* Glitchy letter materialization */
 .name-letter{display:inline-block;opacity:0;position:relative}
 .name-letter.glitch-in{animation:letterGlitchIn .38s steps(1) forwards}
@@ -209,8 +209,8 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 <div class="hero-inner">
 <div class="hero-status rv"><span class="dot"></span>OPEN TO OPPORTUNITIES</div>
 <div class="name-reveal">
-<span class="name-first" id="name-first-el">anthony</span>
-<span class="name-last" id="name-last-el" data-text="claudet">claudet</span>
+<span class="name-first" id="name-first-el">Anthony</span>
+<span class="name-last" id="name-last-el" data-text="Claudet">Claudet</span>
 </div>
 <div class="hero-role"><span>Electrical Engineering</span> · Stevens Institute of Technology</div>
 <div class="hero-school">B.E. EE · Expected <b>May 2029</b> · GPA <b>3.85</b> · Hoboken, NJ</div>
@@ -386,15 +386,16 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 (function(){
 const ldr=document.getElementById('loader'),cvs=document.getElementById('loader-canvas');
 if(!cvs)return;
-const ctx=cvs.getContext('2d'),W=320,H=320,cx=W/2,cy=H/2;
+cvs.width=560;cvs.height=560;
+const ctx=cvs.getContext('2d'),W=560,H=560,cx=W/2,cy=H/2;
 // Icosahedron
 const phi=(1+Math.sqrt(5))/2,raw=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[phi,0,-1],[-phi,0,1],[-phi,0,-1]];
 const verts=raw.map(v=>{const l=Math.hypot(...v);return v.map(c=>c/l)});
 const edges=[[0,1],[0,4],[0,5],[0,8],[0,10],[1,6],[1,7],[1,8],[1,10],[2,3],[2,4],[2,5],[2,9],[2,11],[3,6],[3,7],[3,9],[3,11],[4,8],[4,9],[5,10],[5,11],[6,8],[6,9],[7,10],[7,11],[8,9],[10,11],[4,5],[6,7]];
-function rx(v,a){return[v[0],v[1]*Math.cos(a)-v[2]*Math.sin(a),v[1]*Math.sin(a)+v[2]*Math.cos(a)]}
-function ry(v,a){return[v[0]*Math.cos(a)+v[2]*Math.sin(a),v[1],-v[0]*Math.sin(a)+v[2]*Math.cos(a)]}
-function rz(v,a){return[v[0]*Math.cos(a)-v[1]*Math.sin(a),v[0]*Math.sin(a)+v[1]*Math.cos(a),v[2]]}
-function proj(v){const f=3.2;const s=62;return[cx+v[0]*s/(v[2]+f),cy+v[1]*s/(v[2]+f)]}
+function rotX(v,a){return[v[0],v[1]*Math.cos(a)-v[2]*Math.sin(a),v[1]*Math.sin(a)+v[2]*Math.cos(a)]}
+function rotY(v,a){return[v[0]*Math.cos(a)+v[2]*Math.sin(a),v[1],-v[0]*Math.sin(a)+v[2]*Math.cos(a)]}
+function rotZ(v,a){return[v[0]*Math.cos(a)-v[1]*Math.sin(a),v[0]*Math.sin(a)+v[1]*Math.cos(a),v[2]]}
+function proj(v){const f=2.8;const s=185;return[cx+v[0]*s/(v[2]+f),cy+v[1]*s/(v[2]+f)]}
 // Favicon image
 const fav=new Image();fav.src='favicon.png?v=2';
 const start=performance.now();
@@ -410,38 +411,46 @@ function draw(){
   if(glitching){
     const gp=(elapsed-2.0)/0.4;
     if(Math.random()<gp*.7){ctx.clearRect(0,0,W,H);if(Math.random()<.3)return}
-    ctx.save();ctx.translate(cx,cy);ctx.translate((Math.random()-.5)*gp*30,(Math.random()-.5)*gp*30);ctx.translate(-cx,-cy);
-    ctx.globalAlpha=1-gp*.8;
+    ctx.save();ctx.translate(cx,cy);ctx.translate((Math.random()-.5)*gp*40,(Math.random()-.5)*gp*40);ctx.translate(-cx,-cy);
+    ctx.globalAlpha=1-gp*.85;
   }
-  const t=elapsed*1.8;
-  const pts=verts.map(v=>{let p=rx(v,t);p=ry(p,t*.7);p=rz(p,t*.4);return proj(p)});
-  // Draw edges with gradient
+  const t=elapsed*1.6;
+  const pts=verts.map(v=>{let p=rotX(v,t);p=rotY(p,t*.7);p=rotZ(p,t*.4);return proj(p)});
+  // Draw edges with gradient glow
   edges.forEach(([i,j])=>{
     const[ax,ay]=pts[i],[bx,by]=pts[j];
     const grad=ctx.createLinearGradient(ax,ay,bx,by);
-    grad.addColorStop(0,'rgba(130,200,255,.7)');grad.addColorStop(1,'rgba(180,130,255,.7)');
+    grad.addColorStop(0,'rgba(130,200,255,.75)');grad.addColorStop(1,'rgba(180,130,255,.75)');
+    // Glow pass
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
-    ctx.strokeStyle=grad;ctx.lineWidth=1.5;
-    ctx.shadowColor='rgba(150,170,255,.5)';ctx.shadowBlur=8;
-    ctx.stroke();ctx.shadowBlur=0;
+    ctx.strokeStyle=grad;ctx.lineWidth=4;
+    ctx.shadowColor='rgba(140,170,255,.4)';ctx.shadowBlur=14;
+    ctx.stroke();
+    // Sharp pass
+    ctx.lineWidth=1.5;ctx.shadowBlur=0;
+    ctx.stroke();
   });
   // Vertices glow dots
   pts.forEach(([x,y])=>{
-    ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);
-    ctx.fillStyle='rgba(180,210,255,.8)';ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='rgba(190,220,255,.9)';
+    ctx.shadowColor='rgba(150,190,255,.6)';ctx.shadowBlur=8;
+    ctx.fill();ctx.shadowBlur=0;
   });
   // Center circle with favicon
+  const favR=52;
   ctx.save();
-  ctx.beginPath();ctx.arc(cx,cy,28,0,Math.PI*2);ctx.clip();
-  ctx.fillStyle='#0a0d18';ctx.fillRect(cx-28,cy-28,56,56);
-  if(fav.complete&&fav.naturalWidth>0){ctx.drawImage(fav,cx-22,cy-22,44,44)}
+  ctx.beginPath();ctx.arc(cx,cy,favR,0,Math.PI*2);ctx.clip();
+  ctx.fillStyle='#080b16';ctx.fillRect(cx-favR,cy-favR,favR*2,favR*2);
+  if(fav.complete&&fav.naturalWidth>0){const fs=favR*1.5;ctx.drawImage(fav,cx-fs/2,cy-fs/2,fs,fs)}
   ctx.restore();
   // Circle border glow
-  ctx.beginPath();ctx.arc(cx,cy,28,0,Math.PI*2);
-  ctx.strokeStyle='rgba(150,180,255,.4)';ctx.lineWidth=1.5;ctx.shadowColor='rgba(130,170,255,.6)';ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;
+  ctx.beginPath();ctx.arc(cx,cy,favR,0,Math.PI*2);
+  const cGrad=ctx.createLinearGradient(cx-favR,cy,cx+favR,cy);
+  cGrad.addColorStop(0,'rgba(130,200,255,.5)');cGrad.addColorStop(1,'rgba(180,130,255,.5)');
+  ctx.strokeStyle=cGrad;ctx.lineWidth=2;ctx.shadowColor='rgba(140,180,255,.6)';ctx.shadowBlur=16;ctx.stroke();ctx.shadowBlur=0;
   if(glitching){ctx.restore()}
 }
-// Start on window load
 window.addEventListener('load',()=>{requestAnimationFrame(draw)});
 })();
 
@@ -509,38 +518,56 @@ hero.style.position='relative';
 hero.appendChild(sparkCvs);resizeSpark();
 window.addEventListener('resize',resizeSpark);
 const heroRect=hero.getBoundingClientRect();
-// Split first name lowercase
-firstEl.innerHTML=[...'anthony'].map(ch=>`<span class="name-letter">${ch}</span>`).join('');
-// Split last name with gradient neon colors, lowercase
+// Split first name (preserve capitalization from HTML)
+const firstName=firstEl.textContent;
+firstEl.innerHTML=[...firstName].map(ch=>`<span class="name-letter">${ch}</span>`).join('');
+// Split last name with gradient neon colors
 const lc=['#00ffe0','#30d8e0','#5b7cf6','#8b5cf6','#a855f7','#cc4eb0','#ec4899'];
-lastEl.innerHTML=[...'claudet'].map((ch,i)=>`<span class="name-letter" style="color:${lc[i]};text-shadow:0 0 28px ${lc[i]}99">${ch}</span>`).join('');
+const lastName=lastEl.textContent;
+lastEl.innerHTML=[...lastName].map((ch,i)=>`<span class="name-letter" style="color:${lc[i%lc.length]};text-shadow:0 0 28px ${lc[i%lc.length]}99">${ch}</span>`).join('');
 
-const baseDelay=2400;const gap=95;
+const baseDelay=2400;
 const all=[...document.querySelectorAll('.name-letter')];
-let revealed=[];
 let sparkRunning=false;
 
-all.forEach((el,i)=>{setTimeout(()=>{
-  el.classList.add('glitch-in');
-  const r=el.getBoundingClientRect();
-  const x=r.left-heroRect.left+r.width/2;const y=r.top-heroRect.top+r.height/2;
-  // Burst of sparks — spread far horizontally
-  addSparks(x,y,14,2.5);
-  // Extra sparks that spread toward the full name width
-  const nameW=lastEl.getBoundingClientRect().width||firstEl.getBoundingClientRect().width;
-  for(let j=0;j<6;j++){
-    const hue=155+Math.random()*130;
-    const targetX=(Math.random()-.5)*nameW*1.2;
-    sparks.push({x,y,vx:targetX*.02,vy:(Math.random()-.5)*2,life:1,hue,sz:.8+Math.random()*1.5})}
-  // Electric arcs to previously revealed letters
-  revealed.forEach(prev=>{
-    if(Math.random()<.6){
-      const pr=prev.getBoundingClientRect();
-      addArc(x,y,pr.left-heroRect.left+pr.width/2,pr.top-heroRect.top+pr.height/2)}});
-  revealed.push(el);
+// All letters materialize at the same time
+setTimeout(()=>{
+  all.forEach((el,i)=>{
+    // Slight random variation in animation (each letter uses the same glitch-in but CSS handles randomness via steps)
+    el.style.animationDelay=`${Math.random()*0.05}s`;
+    el.classList.add('glitch-in');
+  });
+  // Burst sparks from every letter simultaneously
+  const nameW=Math.max(lastEl.getBoundingClientRect().width,firstEl.getBoundingClientRect().width);
+  all.forEach((el,i)=>{
+    const r=el.getBoundingClientRect();
+    const x=r.left-heroRect.left+r.width/2;const y=r.top-heroRect.top+r.height/2;
+    addSparks(x,y,10,2.5);
+    // Long-range sparks stretching across the name
+    for(let j=0;j<4;j++){
+      const hue=155+Math.random()*130;
+      const targetX=(Math.random()-.5)*nameW*1.4;
+      sparks.push({x,y,vx:targetX*.025,vy:(Math.random()-.5)*2.5,life:1,hue,sz:.8+Math.random()*1.5})}
+  });
+  // Electric arcs between random letter pairs
+  for(let a=0;a<8;a++){
+    const i1=Math.floor(Math.random()*all.length);
+    const i2=Math.floor(Math.random()*all.length);
+    if(i1===i2)continue;
+    const r1=all[i1].getBoundingClientRect(),r2=all[i2].getBoundingClientRect();
+    addArc(r1.left-heroRect.left+r1.width/2,r1.top-heroRect.top+r1.height/2,
+           r2.left-heroRect.left+r2.width/2,r2.top-heroRect.top+r2.height/2);
+  }
   if(!sparkRunning){sparkRunning=true;requestAnimationFrame(drawSparks)}
-  if(el.parentElement===lastEl)setTimeout(()=>addSparks(x,y,8,1.8),160);
-},baseDelay+i*gap)});
+  // Second wave of sparks shortly after
+  setTimeout(()=>{
+    all.forEach(el=>{
+      const r=el.getBoundingClientRect();
+      addSparks(r.left-heroRect.left+r.width/2,r.top-heroRect.top+r.height/2,5,1.8);
+    });
+    requestAnimationFrame(drawSparks);
+  },200);
+},baseDelay);
 }
 window.addEventListener('load',()=>setTimeout(animateName,300));
 })();
