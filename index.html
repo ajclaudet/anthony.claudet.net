@@ -293,7 +293,7 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 <div class="lab-canvas-wrap"><canvas id="grav-canvas"></canvas></div>
 <div class="lab-info">
 <div class="lab-title">Gravity Sandbox</div>
-<div class="lab-hint">Click + drag to launch bodies · Scroll to change mass · Press C to clear</div>
+<div class="lab-hint">Left-drag to launch · [ ] change mass · Scroll to zoom · Right-drag to pan · Right-click body to delete · T: toggle paths · C: reset</div>
 </div>
 </div>
 
@@ -399,8 +399,7 @@ function edgeColor(z,alpha){
 
 const RING_R=242;
 const RING_SPEED=5.8;
-const MAX_TRAIL=Math.PI*1.1; // ~198° max trail
-// Truly random start anywhere on the ring so it's obviously different each load
+// Tail always moves at 68% of head speed → no sudden jump, trail grows naturally
 const ringStart=Math.random()*Math.PI*2;
 
 const start=performance.now();
@@ -421,13 +420,9 @@ function draw(){
   const pts=verts.map(v=>{let p=rotX(v,t);p=rotY(p,t*.65);p=rotZ(p,t*.35);return proj(p,sc)});
 
   // ── Ring — single continuous arc, conic gradient encodes color + alpha ──
-  const headAng=ringStart+elapsed*RING_SPEED; // clockwise
-  const trailLen=Math.min(elapsed*RING_SPEED*0.68,MAX_TRAIL);
-  const tailAng=headAng-trailLen;
-
-  // Faint base track so the full circle is always subtly visible
-  ctx.beginPath();ctx.arc(cx,cy,RING_R,0,Math.PI*2);
-  ctx.strokeStyle='rgba(80,105,175,.10)';ctx.lineWidth=1.2;ctx.stroke();
+  const headAng=ringStart+elapsed*RING_SPEED;
+  const tailAng=ringStart+elapsed*RING_SPEED*0.68; // always exactly 68% of head speed
+  const trailLen=headAng-tailAng;
 
   if(trailLen>0.02){
     // conic gradient: stop positions are fractions of 360°
@@ -595,48 +590,112 @@ ctx.fillStyle='#fff';ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.t
 (function(){
 const c=document.getElementById('grav-canvas'),ctx=c.getContext('2d'),wrap=c.parentElement;
 function resize(){c.width=wrap.clientWidth;c.height=wrap.clientHeight}resize();window.addEventListener('resize',resize);
-const G=0.5;let bodies=[],dragStart=null,dragEnd=null,placeMass=8;
-// Seed
-function seed(){bodies=[];const cx=c.width/2,cy=c.height/2;
-bodies.push({x:cx,y:cy,vx:0,vy:0,mass:200,r:14,hue:45,trail:[],fixed:true});
-for(let i=0;i<6;i++){const a=i*Math.PI*2/6,d=80+i*20;const v=Math.sqrt(G*200/d)*(0.8+Math.random()*0.4);const m=3+Math.random()*5;
-bodies.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,vx:-Math.sin(a)*v,vy:Math.cos(a)*v,mass:m,r:Math.max(2,Math.sqrt(m)*1.5),hue:170+i*25,trail:[],fixed:false})}}
+const G=0.5;
+let bodies=[],dragStart=null,dragEnd=null,placeMass=8;
+let zoom=1,viewX=0,viewY=0;
+let isPanning=false,panStart=null,panViewStart=null,panMoved=false;
+let showPaths=false;
+const MAX_TRAIL=4000,TRAIL_DISP=80;
+
+function toWorld(cx,cy){return{x:(cx-c.width/2)/zoom+viewX,y:(cy-c.height/2)/zoom+viewY}}
+function toCanvas(wx,wy){return{x:(wx-viewX)*zoom+c.width/2,y:(wy-viewY)*zoom+c.height/2}}
+
+function seed(){
+  bodies=[];viewX=0;viewY=0;zoom=1;
+  bodies.push({x:0,y:0,vx:0,vy:0,mass:200,r:14,hue:45,trail:[],fixed:true});
+  for(let i=0;i<6;i++){const a=i*Math.PI*2/6,d=80+i*20;const v=Math.sqrt(G*200/d)*(0.8+Math.random()*0.4);const m=3+Math.random()*5;
+  bodies.push({x:Math.cos(a)*d,y:Math.sin(a)*d,vx:-Math.sin(a)*v,vy:Math.cos(a)*v,mass:m,r:Math.max(2,Math.sqrt(m)*1.5),hue:170+i*25,trail:[],fixed:false})}}
 seed();
-c.addEventListener('mousedown',e=>{const r=c.getBoundingClientRect();dragStart={x:e.clientX-r.left,y:e.clientY-r.top};dragEnd={...dragStart}});
-c.addEventListener('mousemove',e=>{if(!dragStart)return;const r=c.getBoundingClientRect();dragEnd={x:e.clientX-r.left,y:e.clientY-r.top}});
-c.addEventListener('mouseup',e=>{if(!dragStart)return;const r=c.getBoundingClientRect();const ex=e.clientX-r.left,ey=e.clientY-r.top;
-const vx=(dragStart.x-ex)*0.05,vy=(dragStart.y-ey)*0.05;
-bodies.push({x:dragStart.x,y:dragStart.y,vx,vy,mass:placeMass,r:Math.max(2,Math.sqrt(placeMass)*1.5),hue:Math.random()*360,trail:[],fixed:false});dragStart=null;dragEnd=null});
-c.addEventListener('wheel',e=>{placeMass=Math.max(1,Math.min(300,placeMass*(e.deltaY>0?1.2:.8)));e.preventDefault()},{passive:false});
-document.addEventListener('keypress',e=>{if(e.key==='c'||e.key==='C')seed()});
+
+c.addEventListener('mousedown',e=>{
+  const r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(e.button===1||e.button===2){isPanning=true;panMoved=false;panStart={x:mx,y:my};panViewStart={x:viewX,y:viewY};e.preventDefault();return}
+  const w=toWorld(mx,my);dragStart={x:mx,y:my,wx:w.x,wy:w.y};dragEnd={x:mx,y:my}});
+c.addEventListener('mousemove',e=>{
+  const r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(isPanning){viewX=panViewStart.x-(mx-panStart.x)/zoom;viewY=panViewStart.y-(my-panStart.y)/zoom;panMoved=true;return}
+  if(!dragStart)return;dragEnd={x:mx,y:my}});
+c.addEventListener('mouseup',e=>{
+  const r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(e.button===2){
+    if(!panMoved){const w=toWorld(mx,my);let best=-1,bestD=Infinity;
+    bodies.forEach((b,i)=>{if(b.fixed)return;const p=toCanvas(b.x,b.y);const d=Math.hypot(p.x-mx,p.y-my);if(d<Math.max(b.r*zoom+8,12)&&d<bestD){bestD=d;best=i}});
+    if(best>=0)bodies.splice(best,1)}isPanning=false;return}
+  if(e.button===1){isPanning=false;return}
+  if(!dragStart)return;
+  const w=toWorld(mx,my);const vx=(dragStart.wx-w.x)*0.05,vy=(dragStart.wy-w.y)*0.05;
+  bodies.push({x:dragStart.wx,y:dragStart.wy,vx,vy,mass:placeMass,r:Math.max(2,Math.sqrt(placeMass)*1.5),hue:Math.random()*360,trail:[],fixed:false});
+  dragStart=null;dragEnd=null});
+c.addEventListener('contextmenu',e=>e.preventDefault());
+c.addEventListener('wheel',e=>{
+  const r=c.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const w0=toWorld(mx,my);
+  zoom=Math.max(1/50,Math.min(1,zoom*(e.deltaY>0?0.88:1.14)));
+  const w1=toWorld(mx,my);viewX+=w0.x-w1.x;viewY+=w0.y-w1.y;
+  e.preventDefault()},{passive:false});
+document.addEventListener('keypress',e=>{
+  if(e.key==='c'||e.key==='C')seed();
+  if(e.key==='t'||e.key==='T')showPaths=!showPaths;
+  if(e.key==='['||e.key==='{')placeMass=Math.max(1,Math.round(placeMass/1.35));
+  if(e.key===']'||e.key==='}')placeMass=Math.min(300,Math.round(placeMass*1.35));});
 let active=false;const obs=new IntersectionObserver(es=>{active=es[0].isIntersecting},{threshold:.05});obs.observe(c);
 
 function draw(){requestAnimationFrame(draw);if(!active)return;
-ctx.fillStyle='rgba(5,6,12,.15)';ctx.fillRect(0,0,c.width,c.height);
+ctx.fillStyle='#05060c';ctx.fillRect(0,0,c.width,c.height);
 // Physics
 const dt=0.5;
 for(let i=0;i<bodies.length;i++){if(bodies[i].fixed)continue;let fx=0,fy=0;
-for(let j=0;j<bodies.length;j++){if(i===j)continue;const dx=bodies[j].x-bodies[i].x,dy=bodies[j].y-bodies[i].y;const d2=dx*dx+dy*dy+50;const d=Math.sqrt(d2);
-const f=G*bodies[i].mass*bodies[j].mass/d2;fx+=f*dx/d;fy+=f*dy/d}
-bodies[i].vx+=fx/bodies[i].mass*dt;bodies[i].vy+=fy/bodies[i].mass*dt;bodies[i].x+=bodies[i].vx*dt;bodies[i].y+=bodies[i].vy*dt;
-bodies[i].trail.push({x:bodies[i].x,y:bodies[i].y});if(bodies[i].trail.length>80)bodies[i].trail.shift()}
-// Spacetime grid
+  for(let j=0;j<bodies.length;j++){if(i===j)continue;const dx=bodies[j].x-bodies[i].x,dy=bodies[j].y-bodies[i].y;
+  const d2=dx*dx+dy*dy+50,d=Math.sqrt(d2),f=G*bodies[i].mass*bodies[j].mass/d2;fx+=f*dx/d;fy+=f*dy/d}
+  bodies[i].vx+=fx/bodies[i].mass*dt;bodies[i].vy+=fy/bodies[i].mass*dt;
+  bodies[i].x+=bodies[i].vx*dt;bodies[i].y+=bodies[i].vy*dt;
+  bodies[i].trail.push({x:bodies[i].x,y:bodies[i].y});if(bodies[i].trail.length>MAX_TRAIL)bodies[i].trail.shift()}
+
+ctx.save();
+ctx.translate(c.width/2,c.height/2);ctx.scale(zoom,zoom);ctx.translate(-viewX,-viewY);
+
+// Dim square grid (world space)
+const gs=50,vl=c.width/(2*zoom),vt=c.height/(2*zoom);
+const gx0=Math.floor((viewX-vl)/gs)*gs,gy0=Math.floor((viewY-vt)/gs)*gs;
+ctx.strokeStyle='rgba(80,110,190,0.07)';ctx.lineWidth=1/zoom;ctx.beginPath();
+for(let gx=gx0;gx<=viewX+vl;gx+=gs){ctx.moveTo(gx,viewY-vt);ctx.lineTo(gx,viewY+vt)}
+for(let gy=gy0;gy<=viewY+vt;gy+=gs){ctx.moveTo(viewX-vl,gy);ctx.lineTo(viewX+vl,gy)}
+ctx.stroke();
+
+// Trails
+bodies.forEach(b=>{const pts=showPaths?b.trail:b.trail.slice(-TRAIL_DISP);
+  if(pts.length>1){ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=`hsla(${b.hue},80%,60%,.18)`;ctx.lineWidth=1/zoom;ctx.stroke()}});
+
+// Bodies
+bodies.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+  const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*2);
+  g.addColorStop(0,`hsla(${b.hue},80%,65%,.9)`);g.addColorStop(1,`hsla(${b.hue},80%,65%,0)`);
+  ctx.fillStyle=g;ctx.fill()});
+ctx.restore();
+
+// Spacetime warp dots (canvas space)
 for(let gx=0;gx<c.width;gx+=25)for(let gy=0;gy<c.height;gy+=25){
-let dx=0,dy=0;bodies.forEach(b=>{const bx=gx-b.x,by=gy-b.y;const d=Math.sqrt(bx*bx+by*by)+1;const f=b.mass/(d*d)*2;dx-=bx/d*f;dy-=by/d*f});
-ctx.fillStyle=`hsla(260,60%,50%,${Math.min(.15,Math.sqrt(dx*dx+dy*dy)*.005)})`;ctx.fillRect(gx+dx,gy+dy,1.5,1.5)}
-// Draw
-bodies.forEach(b=>{if(b.trail.length>2){ctx.beginPath();ctx.moveTo(b.trail[0].x,b.trail[0].y);b.trail.forEach(t=>ctx.lineTo(t.x,t.y));
-ctx.strokeStyle=`hsla(${b.hue},80%,60%,.15)`;ctx.lineWidth=1;ctx.stroke()}
-ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*2);
-g.addColorStop(0,`hsla(${b.hue},80%,65%,.9)`);g.addColorStop(1,`hsla(${b.hue},80%,65%,0)`);ctx.fillStyle=g;ctx.fill()});
+  let dx=0,dy=0;bodies.forEach(b=>{const bp=toCanvas(b.x,b.y);const bx=gx-bp.x,by=gy-bp.y;
+  const d=Math.sqrt(bx*bx+by*by)+1,f=b.mass*zoom/(d*d)*2;dx-=bx/d*f;dy-=by/d*f});
+  ctx.fillStyle=`hsla(260,60%,50%,${Math.min(.12,Math.sqrt(dx*dx+dy*dy)*.004)})`;
+  ctx.fillRect(gx+dx,gy+dy,1.5,1.5)}
+
 // Remove escapees
-bodies=bodies.filter(b=>b.fixed||!(b.x<-200||b.x>c.width+200||b.y<-200||b.y>c.height+200));
-// Drag indicator
-if(dragStart&&dragEnd){ctx.beginPath();ctx.moveTo(dragStart.x,dragStart.y);ctx.lineTo(dragEnd.x,dragEnd.y);
-ctx.strokeStyle='rgba(0,255,224,.4)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
-ctx.beginPath();ctx.arc(dragStart.x,dragStart.y,Math.max(2,Math.sqrt(placeMass)*1.5),0,Math.PI*2);ctx.fillStyle='rgba(0,255,224,.3)';ctx.fill()}
-// Mass indicator
-ctx.fillStyle='rgba(255,255,255,.2)';ctx.font='10px "JetBrains Mono"';ctx.textAlign='left';ctx.fillText(`mass: ${placeMass.toFixed(0)}`,8,c.height-8)}
+const esc=3000/zoom;
+bodies=bodies.filter(b=>b.fixed||!(Math.abs(b.x-viewX)>esc||Math.abs(b.y-viewY)>esc));
+
+// Drag arrow
+if(dragStart&&dragEnd){const p=toCanvas(dragStart.wx,dragStart.wy);
+  ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(dragEnd.x,dragEnd.y);
+  ctx.strokeStyle='rgba(0,255,224,.4)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(p.x,p.y,Math.max(2,Math.sqrt(placeMass)*1.5)*zoom,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,255,224,.25)';ctx.fill()}
+
+// HUD
+ctx.fillStyle='rgba(255,255,255,.22)';ctx.font='10px "JetBrains Mono"';ctx.textAlign='left';
+ctx.fillText(`mass: ${placeMass.toFixed(0)}   [ ] adjust`,8,c.height-20);
+ctx.fillText(`zoom: ${zoom<0.99?(1/zoom).toFixed(1)+'×':'1×'}  |  T: paths ${showPaths?'ON':'off'}  |  C: reset`,8,c.height-8)}
 draw()})();
 
 /* ══ SIGNAL SYNTHESIZER ══ */
