@@ -371,7 +371,7 @@ footer .accent{background:linear-gradient(90deg,var(--neon),var(--neon2));-webki
 <footer><span>// anthony_claudet.net</span><span>© 2026 · Built with <span class="accent">voltage</span> and curiosity</span></footer>
 
 <script>
-/* ══ LOADER — Rotating icosahedron + thin ring with full glow sweep ══ */
+/* ══ LOADER — Rotating icosahedron + comet-tail loading ring ══ */
 (function(){
 const ldr=document.getElementById('loader'),cvs=document.getElementById('loader-canvas');
 if(!cvs)return;
@@ -397,69 +397,88 @@ function edgeColor(z,alpha){
   return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
 }
 
-const RING_R=242; // fixed — does not pulsate
+const RING_R=242;
+const RING_SPEED=5.8; // rad/s — fast clockwise rotation
+const MAX_TRAIL=Math.PI*1.1; // ~198° max trail length
+// Random start: 12 o'clock (−π/2) to 1 o'clock (−π/2 + π/6), clockwise
+const ringStart=-Math.PI/2+Math.random()*(Math.PI/6);
 
 const start=performance.now();
+let announced=false;
 let done=false;
 
 function draw(){
   if(done)return;
   requestAnimationFrame(draw);
   const elapsed=(performance.now()-start)/1000;
-  if(elapsed>=2.0){ldr.classList.add('done');done=true;return}
+
+  // Trigger CSS fade at exactly 2s, keep drawing through the 0.35s fade-out
+  if(elapsed>=2.0&&!announced){ldr.classList.add('done');announced=true}
+  if(elapsed>=2.35){done=true;return}
 
   ctx.clearRect(0,0,S,S);
 
-  // Shape pulsates, ring does not
+  // ── Shape — pulsates ──
   const pulse=1+0.22*Math.sin(elapsed*Math.PI*2);
-  const sc=190*pulse;
+  const sc=257*pulse; // 35% bigger than 190
   const t=elapsed*1.2;
   const pts=verts.map(v=>{let p=rotX(v,t);p=rotY(p,t*.65);p=rotZ(p,t*.35);return proj(p,sc)});
 
-  // ── Ring: fixed radius, full-circle glow that fades in and out ──
-  // Dim base ring — always visible, very subtle
-  ctx.beginPath();ctx.arc(cx,cy,RING_R,0,Math.PI*2);
-  ctx.strokeStyle='rgba(90,110,180,.13)';ctx.lineWidth=1.2;ctx.stroke();
+  // ── Ring — comet tail, no pulsation ──
+  // Head advances clockwise; trail builds behind it at ~68% of head speed,
+  // so the tail lingers and fades slower than the head moves
+  const headAng=ringStart+elapsed*RING_SPEED;
+  const trailLen=Math.min(elapsed*RING_SPEED*0.68,MAX_TRAIL);
 
-  // Rotating glow patch — full sweep (360°) so glow fades in and out all the way around
-  const glowRot=-t*1.4;
-  // The patch covers the full circle but alpha varies: bright spot fading to transparent
-  const cGrad=ctx.createConicGradient(glowRot,cx,cy);
-  cGrad.addColorStop(0.00,'rgba(0,255,224,0.0)');
-  cGrad.addColorStop(0.08,'rgba(0,230,255,0.7)');
-  cGrad.addColorStop(0.22,'rgba(80,140,255,0.9)');
-  cGrad.addColorStop(0.38,'rgba(168,85,247,0.85)');
-  cGrad.addColorStop(0.52,'rgba(236,72,153,0.7)');
-  cGrad.addColorStop(0.65,'rgba(236,72,153,0.0)');
-  cGrad.addColorStop(1.00,'rgba(0,255,224,0.0)');
-
-  // Soft wide glow halo
+  // Ghost base ring — very faint track
   ctx.beginPath();ctx.arc(cx,cy,RING_R,0,Math.PI*2);
-  ctx.strokeStyle=cGrad;ctx.lineWidth=14;
-  ctx.shadowColor='rgba(130,160,255,0.45)';ctx.shadowBlur=22;
-  ctx.stroke();ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(80,100,170,.09)';ctx.lineWidth=1;ctx.stroke();
 
-  // Thin crisp ring on top
-  ctx.beginPath();ctx.arc(cx,cy,RING_R,0,Math.PI*2);
-  ctx.strokeStyle=cGrad;ctx.lineWidth=1.4;
-  ctx.shadowColor='rgba(180,210,255,0.5)';ctx.shadowBlur=8;
+  // Draw trail from tail to head (head rendered on top)
+  const SEGS=56;
+  for(let i=0;i<SEGS;i++){
+    // i=0 → tail end, i=SEGS-1 → just behind head tip
+    const tFrac=i/(SEGS-1);           // 0=tail, 1=head
+    const a0=headAng-trailLen*(1-tFrac);
+    const a1=headAng-trailLen*(1-(i+1)/SEGS);
+
+    // Alpha: gentle ramp toward head — tail lingers (not too steep)
+    const alpha=Math.pow(tFrac,1.4)*0.88;
+
+    // Color: cyan at tail → blue → purple → magenta at head
+    const cf=tFrac;
+    const r=Math.round(cf<0.5?(0+120*(cf*2)):(120+(236-120)*((cf-.5)*2)));
+    const g=Math.round(cf<0.5?(255+(80-255)*(cf*2)):(80+(72-80)*((cf-.5)*2)));
+    const b=Math.round(cf<0.5?(224+(255-224)*(cf*2)):(255+(153-255)*((cf-.5)*2)));
+
+    // Soft glow halo (thin — only 7px wide)
+    ctx.beginPath();ctx.arc(cx,cy,RING_R,a0,a1);
+    ctx.strokeStyle=`rgba(${r},${g},${b},${(alpha*0.32).toFixed(3)})`;
+    ctx.lineWidth=7;ctx.stroke();
+
+    // Crisp line on top
+    ctx.beginPath();ctx.arc(cx,cy,RING_R,a0,a1);
+    ctx.strokeStyle=`rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+    ctx.lineWidth=1.1;ctx.stroke();
+  }
+
+  // Bright white-hot head tip
+  ctx.beginPath();ctx.arc(cx,cy,RING_R,headAng-0.04,headAng+0.015);
+  ctx.strokeStyle='rgba(230,240,255,0.92)';ctx.lineWidth=2.2;
+  ctx.shadowColor='rgba(180,210,255,0.8)';ctx.shadowBlur=14;
   ctx.stroke();ctx.shadowBlur=0;
 
   // ── Icosahedron edges ──
   const sortedEdges=[...edges].sort((a,b)=>(pts[a[0]][2]+pts[a[1]][2])-(pts[b[0]][2]+pts[b[1]][2]));
-
   sortedEdges.forEach(([i,j])=>{
     const[ax,ay,az]=pts[i],[bx,by,bz]=pts[j];
     const avgZ=(az+bz)/2;
     const depth=(avgZ+1.5)/3.0;
     const alpha=0.45+depth*0.5;
-
-    // Glow pass
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
     ctx.strokeStyle=edgeColor(avgZ,alpha*0.38);
     ctx.lineWidth=6;ctx.shadowColor=edgeColor(avgZ,0.4);ctx.shadowBlur=16;
     ctx.stroke();ctx.shadowBlur=0;
-    // Crisp line
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
     ctx.strokeStyle=edgeColor(avgZ,alpha);
     ctx.lineWidth=1.6;ctx.stroke();
